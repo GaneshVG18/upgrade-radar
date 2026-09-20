@@ -7,6 +7,7 @@ interface PackageJson {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
   optionalDependencies?: Record<string, string>;
+  workspaces?: unknown;
 }
 
 interface Lockfile {
@@ -35,6 +36,13 @@ export function validateLocalDependencyFacts(repo: string, upgrade: Upgrade): st
   if (!declared) throw new Error(`${upgrade.package} is not a direct dependency in package.json`);
 
   const limitations: string[] = [];
+  if (manifest.workspaces !== undefined) limitations.push("npm_workspaces_not_supported");
+  const declaredRange = semver.validRange(declared);
+  if (!declaredRange) {
+    limitations.push(`unsupported_dependency_spec:${upgrade.package}:${declared}`);
+  } else if (!semver.satisfies(upgrade.from, declaredRange)) {
+    throw new Error(`package.json declares ${upgrade.package}@${declared}, which does not include --from ${upgrade.from}`);
+  }
   const lockPath = path.join(repo, "package-lock.json");
   try {
     const lock = JSON.parse(readFileSync(lockPath, "utf8")) as Lockfile;
@@ -60,6 +68,14 @@ export function lockVersionFromText(lockText: string, packageName: string): stri
   return lock.packages?.[`node_modules/${packageName}`]?.version;
 }
 
+export function lockfileVersionFromText(lockText: string): number | undefined {
+  return (JSON.parse(lockText) as Lockfile).lockfileVersion;
+}
+
+export function manifestUsesWorkspaces(manifestText: string): boolean {
+  return (JSON.parse(manifestText) as PackageJson).workspaces !== undefined;
+}
+
 export function directDependenciesFromText(manifestText: string): Record<string, string> {
   const manifest = JSON.parse(manifestText) as PackageJson;
   return {
@@ -67,4 +83,15 @@ export function directDependenciesFromText(manifestText: string): Record<string,
     ...manifest.devDependencies,
     ...manifest.optionalDependencies
   };
+}
+
+export function manifestLockDisagreement(
+  packageName: string,
+  manifestFrom: string,
+  manifestTo: string,
+  lockedFrom: string | undefined,
+  lockedTo: string | undefined
+): string | undefined {
+  if (manifestFrom === manifestTo || !lockedFrom || !lockedTo || lockedFrom !== lockedTo) return undefined;
+  return `dependency_diff_manifest_lock_disagreement:${packageName}:${manifestFrom}->${manifestTo}:locked@${lockedFrom}`;
 }

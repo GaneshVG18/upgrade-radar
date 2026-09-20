@@ -1,5 +1,5 @@
 import path from "node:path";
-import { analyzeUsageSites, unsupportedPackageReferences } from "./adapters/index.js";
+import { analyzeUsageSites, isFirstClassPackage, unsupportedPackageReferences } from "./adapters/index.js";
 import { validateLocalDependencyFacts } from "./core/dependency.js";
 import { safeUrl, sha256, shortHash } from "./core/util.js";
 import { parseNotes } from "./notes/parser.js";
@@ -72,7 +72,7 @@ function prepare(options: Omit<AnalyzeOptions, "provider" | "runMode">): Prepare
     if (capped) break;
   }
   const limitations = [...commonLimitations, ...factLimitations, ...snapshot.limitations];
-  let hardIncomplete = snapshot.truncatedCount > 0 || unknownItems.length > 0;
+  let hardIncomplete = factLimitations.length > 0 || snapshot.truncatedCount > 0 || unknownItems.length > 0;
   limitations.push(...unknownItems);
   if (!notes.provenanceVerified) {
     limitations.push("notes_manifest_missing_or_hash_provenance_mismatch");
@@ -82,8 +82,8 @@ function prepare(options: Omit<AnalyzeOptions, "provider" | "runMode">): Prepare
     limitations.push(`candidate_cap_reached:${MAX_CANDIDATES}`);
     hardIncomplete = true;
   }
-  if (options.upgrade.package !== "express" && options.upgrade.package !== "zod") {
-    limitations.push("generic_library_mode_has_no_express_or_zod_adapter_coverage_claim");
+  if (!isFirstClassPackage(options.upgrade.package)) {
+    limitations.push("generic_library_mode_has_no_first_class_adapter_coverage_claim");
   }
   if (!cleanRevision) limitations.push("source_line_links_unavailable_for_dirty_worktree");
   else if (!snapshot.sourceWebBase) limitations.push("source_line_links_unavailable_without_supported_origin_remote");
@@ -115,6 +115,9 @@ export async function analyzeUpgrade(options: AnalyzeOptions): Promise<{ report:
         relationship,
         code: candidate.usage.span,
         note: candidate.note.span,
+        coverage: isFirstClassPackage(candidate.upgrade.package) ? "first-class-adapter" : "generic-adapter",
+        ...(typeof candidate.usage.configuration.resolvedSymbol === "string" ? { resolvedSymbol: candidate.usage.configuration.resolvedSymbol } : {}),
+        ...(typeof candidate.usage.configuration.bindingPath === "string" ? { bindingPath: candidate.usage.configuration.bindingPath } : {}),
         ...(judgment.semantic ? { semantic: judgment.semantic } : {}),
         reasons: judgment.reasons
       });
@@ -128,6 +131,9 @@ export async function analyzeUpgrade(options: AnalyzeOptions): Promise<{ report:
         relationship,
         code: candidate.usage.span,
         note: candidate.note.span,
+        coverage: isFirstClassPackage(candidate.upgrade.package) ? "first-class-adapter" : "generic-adapter",
+        ...(typeof candidate.usage.configuration.resolvedSymbol === "string" ? { resolvedSymbol: candidate.usage.configuration.resolvedSymbol } : {}),
+        ...(typeof candidate.usage.configuration.bindingPath === "string" ? { bindingPath: candidate.usage.configuration.bindingPath } : {}),
         reasons: [`provider_failure:${error instanceof Error ? error.name : "unknown"}`]
       });
     }
@@ -169,7 +175,7 @@ export async function analyzeUpgrade(options: AnalyzeOptions): Promise<{ report:
   return { report, providerFailure };
 }
 
-export function dryRunPlan(options: Omit<AnalyzeOptions, "runMode">) {
+export function dryRunPlan(options: Omit<AnalyzeOptions, "runMode" | "provider"> & { provider: Pick<Provider, "payload"> }) {
   const prepared = prepare(options);
   return {
     runMode: "dry_run" as const,

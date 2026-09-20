@@ -2,7 +2,7 @@
 
 The v0.1 preview is intentionally narrow.
 
-- First-class behavior coverage is Express 4.21.2 → 5.1.0 and Zod 3.25.76 → 4.1.5. Generic package usage does not inherit those claims.
+- First-class behavior coverage is limited to these exact transitions and their documented families: Express 4.21.2 → 5.1.0, Zod 3.25.76 → 4.1.5, Glob 8.1.0 → 10.4.5, and Commander 11.1.0 → 12.1.0. Generic package usage does not inherit those claims.
 - Only npm root projects and package-lock v2/v3 direct dependencies are supported for deterministic upgrade facts.
 - Workspaces, Yarn/pnpm/Bun lockfiles, transitive-only upgrades, computed/dynamic imports, unresolved wrappers, and arbitrary metaprogramming are outside the supported surface.
 - Local re-exports are bounded; this is not full module/dataflow resolution.

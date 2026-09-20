@@ -2,6 +2,15 @@
   "schemaVersion": "upgrade-radar-notes/v1",
   "documents": [
     {
+      "file": "commander-12.md",
+      "package": "commander",
+      "from": "11.1.0",
+      "to": "12.1.0",
+      "sourceUrl": "https://github.com/tj/commander.js/blob/master/CHANGELOG.md",
+      "retrieved": "2026-09-20",
+      "sha256": "79a4c272b4fa69bfae08eed18170b3f87ef3bc4dd0174ea0ccf8f56d44e2e34a"
+    },
+    {
       "file": "express-5.md",
       "package": "express",
       "from": "4.21.2",
@@ -9,6 +18,15 @@
       "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
       "retrieved": "2026-09-20",
       "sha256": "4ba3e4a853213ad35fbd14aa27923ed0c64bfce4323c8eca72ce2c34d0584444"
+    },
+    {
+      "file": "glob-10.md",
+      "package": "glob",
+      "from": "8.1.0",
+      "to": "10.4.5",
+      "sourceUrl": "https://github.com/isaacs/node-glob/blob/main/changelog.md",
+      "retrieved": "2026-09-20",
+      "sha256": "c23752c4cf9675f307a83b1d2128cdf4ea1129d15560f6f052c3c5d7d9577330"
     },
     {
       "file": "zod-4.md",

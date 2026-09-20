@@ -6,14 +6,19 @@ permissions:
   contents: read
 jobs:
   test:
+    name: test (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['24.11.1', '25.x']
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: '24.11.1'
+          node-version: ${{ matrix.node }}
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run typecheck
@@ -22,6 +27,7 @@ jobs:
       - run: npm run test:compat
       - run: npm run build
       - run: npm run smoke
+      - run: npm run test:package
       - name: Baseline example reports
         run: |
           node dist/cli.js analyze --repo ./examples/express-app --package express --from 4.21.2 --to 5.1.0 --notes ./examples/notes/express-5.md --provider baseline --out artifacts/express
@@ -71,10 +77,6 @@ jobs:
         uses: ./
         with:
           repo: ${{ steps.action-fixture.outputs.repo }}
-          base: ${{ steps.action-fixture.outputs.base }}
-          head: ${{ steps.action-fixture.outputs.head }}
-          notes-dir: ${{ github.workspace }}/examples/notes
-          provider: baseline
           out: ${{ runner.temp }}/upgrade-radar-action-report
       - name: Verify composite Action report
         shell: bash

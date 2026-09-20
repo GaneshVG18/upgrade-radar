@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { assertExactUpgrade, directDependenciesFromText, lockVersionFromText } from "../../src/core/dependency.js";
+import { assertExactUpgrade, directDependenciesFromText, lockVersionFromText, manifestLockDisagreement } from "../../src/core/dependency.js";
 import { escapeHtml, redactSecrets, sha256 } from "../../src/core/util.js";
 import { parseNotes } from "../../src/notes/parser.js";
 
@@ -14,6 +14,13 @@ describe("deterministic facts and provenance", () => {
     expect(lockVersionFromText(JSON.stringify({ lockfileVersion: 2, packages: { "node_modules/x": { version: "2.0.0" } } }), "x")).toBe("2.0.0");
     expect(lockVersionFromText(JSON.stringify({ lockfileVersion: 1, packages: {} }), "x")).toBeUndefined();
     expect(directDependenciesFromText('{"dependencies":{"x":"^1"},"devDependencies":{"y":"2"}}')).toEqual({ x: "^1", y: "2" });
+  });
+
+  it("detects a changed manifest declaration when both lockfiles stay on the same version", () => {
+    expect(manifestLockDisagreement("express", "4.21.2", "5.1.0", "4.21.2", "4.21.2"))
+      .toBe("dependency_diff_manifest_lock_disagreement:express:4.21.2->5.1.0:locked@4.21.2");
+    expect(manifestLockDisagreement("express", "4.21.2", "5.1.0", "4.21.2", "5.1.0")).toBeUndefined();
+    expect(manifestLockDisagreement("express", "4.21.2", "4.21.2", "4.21.2", "4.21.2")).toBeUndefined();
   });
 
   it("redacts likely secrets and escapes untrusted report text", () => {
@@ -49,7 +56,7 @@ describe("deterministic facts and provenance", () => {
 
   it("verifies every generated fixture file against the provenance manifest", () => {
     const manifest = JSON.parse(readFileSync("fixtures/manifest.json", "utf8")) as { cases: Array<{ fixturePath: string; hashes: { source: string; note: string; metadata: string } }> };
-    expect(manifest.cases).toHaveLength(48);
+    expect(manifest.cases).toHaveLength(60);
     for (const item of manifest.cases) {
       expect(sha256(readFileSync(path.join(item.fixturePath, "source.js"), "utf8"))).toBe(item.hashes.source);
       expect(sha256(readFileSync(path.join(item.fixturePath, "note.md"), "utf8"))).toBe(item.hashes.note);

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "upgrade-radar-report/v1",
   "runMode": "illustrative_fixture",
-  "generatedAt": "2026-09-20T06:35:38.577Z",
+  "generatedAt": "2026-09-20T15:50:17.339Z",
   "sourceRevision": "authored-demo-fixtures",
   "upgrades": [
     {
@@ -100,7 +100,7 @@
         "path": "examples/zod-app/src/schema.ts",
         "startLine": 4,
         "endLine": 4,
-        "sourceHash": "62e4e02d9b1afe359b1777d30d1d4aaf17a3eddb5a4cd4e9fe102085cd82a0a1",
+        "sourceHash": "a8f223f97bb3a803e8e1e34a8e58948581a778effff60694070bcf3030d97bb9",
         "spanHash": "5aa9e3d7df938d09197b4dcaa44860191a149404759774673b4884c1a5c09ecd",
         "excerpt": "  theme: z.string().default('dark').optional(),"
       },

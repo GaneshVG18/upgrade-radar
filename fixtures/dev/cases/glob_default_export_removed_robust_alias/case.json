@@ -1,0 +1,22 @@
+{
+  "id": "glob_default_export_removed_robust_alias",
+  "family": "glob-default-export-removed",
+  "split": "dev",
+  "label": "positive",
+  "caseRole": "robustness",
+  "package": "glob",
+  "versions": {
+    "old": "8.1.0",
+    "new": "10.4.5"
+  },
+  "sourceUrl": "https://github.com/isaacs/node-glob/blob/main/changelog.md",
+  "behavior": "availability of the callable package root/default export",
+  "noteText": "Glob 9 moved from callbacks to promises and changed exported function names; Glob 10 removed the default export, so code that calls the imported or required package root needs migration to a named API.",
+  "sourceFile": "source.js",
+  "noteFile": "note.md",
+  "expected": {
+    "old": "function",
+    "new": "object"
+  },
+  "command": "npm run test:compat"
+}

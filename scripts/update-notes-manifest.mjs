@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 function hash(text) {
@@ -13,7 +13,7 @@ function meta(text, key) {
 }
 
 const dir = path.resolve("examples/notes");
-const files = ["express-5.md", "zod-4.md"];
+const files = readdirSync(dir).filter((file) => file.endsWith(".md")).sort();
 const documents = files.map((file) => {
   const text = readFileSync(path.join(dir, file), "utf8");
   return {

@@ -622,5 +622,287 @@
     "command": "npm run test:compat",
     "fixturePath": "fixtures/dev/cases/express_req_param_removed_robust_control",
     "sourceSnippet": "import web from \"express\";\nconst app=web();\napp.get(\"/u/:id\", (req, res) => res.end(String(req.params.id)));"
+  },
+  {
+    "id": "glob_default_export_removed_positive",
+    "family": "glob-default-export-removed",
+    "split": "dev",
+    "label": "positive",
+    "caseRole": "canonical",
+    "package": "glob",
+    "versions": {
+      "old": "8.1.0",
+      "new": "10.4.5"
+    },
+    "sourceUrl": "https://github.com/isaacs/node-glob/blob/main/changelog.md",
+    "behavior": "availability of the callable package root/default export",
+    "noteText": "Glob 9 moved from callbacks to promises and changed exported function names; Glob 10 removed the default export, so code that calls the imported or required package root needs migration to a named API.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "expected": {
+      "old": "function",
+      "new": "object"
+    },
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/glob_default_export_removed_positive",
+    "sourceSnippet": "import glob from \"glob\";\nglob(\"*.js\",()=>{});"
+  },
+  {
+    "id": "glob_default_export_removed_negative",
+    "family": "glob-default-export-removed",
+    "split": "dev",
+    "label": "negative",
+    "caseRole": "canonical_control",
+    "package": "glob",
+    "versions": {
+      "old": "8.1.0",
+      "new": "10.4.5"
+    },
+    "sourceUrl": "https://github.com/isaacs/node-glob/blob/main/changelog.md",
+    "behavior": "availability of the callable package root/default export",
+    "noteText": "Glob 9 moved from callbacks to promises and changed exported function names; Glob 10 removed the default export, so code that calls the imported or required package root needs migration to a named API.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "expected": {
+      "old": true,
+      "new": true
+    },
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/glob_default_export_removed_negative",
+    "sourceSnippet": "import { hasMagic } from \"glob\";\nexport const result=hasMagic(\"*.js\");"
+  },
+  {
+    "id": "glob_default_export_removed_unknown",
+    "family": "glob-default-export-removed",
+    "split": "dev",
+    "label": "unknown",
+    "caseRole": "missing_evidence",
+    "package": "glob",
+    "versions": {
+      "old": "8.1.0",
+      "new": "10.4.5"
+    },
+    "sourceUrl": "https://github.com/isaacs/node-glob/blob/main/changelog.md",
+    "behavior": "availability of the callable package root/default export",
+    "noteText": "Glob 9 moved from callbacks to promises and changed exported function names; Glob 10 removed the default export, so code that calls the imported or required package root needs migration to a named API.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "missingEvidence": "behavior-relevant value or configuration is hidden behind an unresolved local wrapper/input",
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/glob_default_export_removed_unknown",
+    "sourceSnippet": "import glob from \"glob\";\nimport { runGlob } from \"./glob-wrapper.js\";\nrunGlob(glob);"
+  },
+  {
+    "id": "glob_default_export_removed_robust_alias",
+    "family": "glob-default-export-removed",
+    "split": "dev",
+    "label": "positive",
+    "caseRole": "robustness",
+    "package": "glob",
+    "versions": {
+      "old": "8.1.0",
+      "new": "10.4.5"
+    },
+    "sourceUrl": "https://github.com/isaacs/node-glob/blob/main/changelog.md",
+    "behavior": "availability of the callable package root/default export",
+    "noteText": "Glob 9 moved from callbacks to promises and changed exported function names; Glob 10 removed the default export, so code that calls the imported or required package root needs migration to a named API.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "expected": {
+      "old": "function",
+      "new": "object"
+    },
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/glob_default_export_removed_robust_alias",
+    "sourceSnippet": "import matchFiles from \"glob\";\nmatchFiles(\"*.js\",()=>{});"
+  },
+  {
+    "id": "glob_default_export_removed_robust_cjs",
+    "family": "glob-default-export-removed",
+    "split": "dev",
+    "label": "positive",
+    "caseRole": "robustness",
+    "package": "glob",
+    "versions": {
+      "old": "8.1.0",
+      "new": "10.4.5"
+    },
+    "sourceUrl": "https://github.com/isaacs/node-glob/blob/main/changelog.md",
+    "behavior": "availability of the callable package root/default export",
+    "noteText": "Glob 9 moved from callbacks to promises and changed exported function names; Glob 10 removed the default export, so code that calls the imported or required package root needs migration to a named API.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "expected": {
+      "old": "function",
+      "new": "object"
+    },
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/glob_default_export_removed_robust_cjs",
+    "sourceSnippet": "const glob=require(\"glob\");\nglob(\"*.js\",()=>{});"
+  },
+  {
+    "id": "glob_default_export_removed_robust_control",
+    "family": "glob-default-export-removed",
+    "split": "dev",
+    "label": "negative",
+    "caseRole": "robustness_control",
+    "package": "glob",
+    "versions": {
+      "old": "8.1.0",
+      "new": "10.4.5"
+    },
+    "sourceUrl": "https://github.com/isaacs/node-glob/blob/main/changelog.md",
+    "behavior": "availability of the callable package root/default export",
+    "noteText": "Glob 9 moved from callbacks to promises and changed exported function names; Glob 10 removed the default export, so code that calls the imported or required package root needs migration to a named API.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "expected": {
+      "old": true,
+      "new": true
+    },
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/glob_default_export_removed_robust_control",
+    "sourceSnippet": "import { hasMagic as matchesPattern } from \"glob\";\nexport const result=matchesPattern(\"*.js\");"
+  },
+  {
+    "id": "commander_commonjs_global_export_removed_positive",
+    "family": "commander-commonjs-global-export-removed",
+    "split": "dev",
+    "label": "positive",
+    "caseRole": "canonical",
+    "package": "commander",
+    "versions": {
+      "old": "11.1.0",
+      "new": "12.1.0"
+    },
+    "sourceUrl": "https://github.com/tj/commander.js/blob/master/CHANGELOG.md",
+    "behavior": "availability of Command methods directly on the CommonJS package root",
+    "noteText": "Commander 12 removed the CommonJS default export of the global Command instance; CommonJS callers must use the named program export or an explicit Command instance.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "expected": {
+      "old": "function",
+      "new": "undefined"
+    },
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/commander_commonjs_global_export_removed_positive",
+    "sourceSnippet": "const commander=require(\"commander\");\ncommander.option(\"-d, --debug\");"
+  },
+  {
+    "id": "commander_commonjs_global_export_removed_negative",
+    "family": "commander-commonjs-global-export-removed",
+    "split": "dev",
+    "label": "negative",
+    "caseRole": "canonical_control",
+    "package": "commander",
+    "versions": {
+      "old": "11.1.0",
+      "new": "12.1.0"
+    },
+    "sourceUrl": "https://github.com/tj/commander.js/blob/master/CHANGELOG.md",
+    "behavior": "availability of Command methods directly on the CommonJS package root",
+    "noteText": "Commander 12 removed the CommonJS default export of the global Command instance; CommonJS callers must use the named program export or an explicit Command instance.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "expected": {
+      "old": "function",
+      "new": "function"
+    },
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/commander_commonjs_global_export_removed_negative",
+    "sourceSnippet": "const {program}=require(\"commander\");\nprogram.option(\"-d, --debug\");"
+  },
+  {
+    "id": "commander_commonjs_global_export_removed_unknown",
+    "family": "commander-commonjs-global-export-removed",
+    "split": "dev",
+    "label": "unknown",
+    "caseRole": "missing_evidence",
+    "package": "commander",
+    "versions": {
+      "old": "11.1.0",
+      "new": "12.1.0"
+    },
+    "sourceUrl": "https://github.com/tj/commander.js/blob/master/CHANGELOG.md",
+    "behavior": "availability of Command methods directly on the CommonJS package root",
+    "noteText": "Commander 12 removed the CommonJS default export of the global Command instance; CommonJS callers must use the named program export or an explicit Command instance.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "missingEvidence": "behavior-relevant value or configuration is hidden behind an unresolved local wrapper/input",
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/commander_commonjs_global_export_removed_unknown",
+    "sourceSnippet": "import * as commander from \"commander\";\nimport { configureCli } from \"./cli-wrapper.js\";\nconfigureCli(commander);"
+  },
+  {
+    "id": "commander_commonjs_global_export_removed_robust_alias",
+    "family": "commander-commonjs-global-export-removed",
+    "split": "dev",
+    "label": "positive",
+    "caseRole": "robustness",
+    "package": "commander",
+    "versions": {
+      "old": "11.1.0",
+      "new": "12.1.0"
+    },
+    "sourceUrl": "https://github.com/tj/commander.js/blob/master/CHANGELOG.md",
+    "behavior": "availability of Command methods directly on the CommonJS package root",
+    "noteText": "Commander 12 removed the CommonJS default export of the global Command instance; CommonJS callers must use the named program export or an explicit Command instance.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "expected": {
+      "old": "function",
+      "new": "undefined"
+    },
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/commander_commonjs_global_export_removed_robust_alias",
+    "sourceSnippet": "const cli=require(\"commander\");\ncli.option(\"-d, --debug\");"
+  },
+  {
+    "id": "commander_commonjs_global_export_removed_robust_cjs",
+    "family": "commander-commonjs-global-export-removed",
+    "split": "dev",
+    "label": "positive",
+    "caseRole": "robustness",
+    "package": "commander",
+    "versions": {
+      "old": "11.1.0",
+      "new": "12.1.0"
+    },
+    "sourceUrl": "https://github.com/tj/commander.js/blob/master/CHANGELOG.md",
+    "behavior": "availability of Command methods directly on the CommonJS package root",
+    "noteText": "Commander 12 removed the CommonJS default export of the global Command instance; CommonJS callers must use the named program export or an explicit Command instance.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "expected": {
+      "old": "function",
+      "new": "undefined"
+    },
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/commander_commonjs_global_export_removed_robust_cjs",
+    "sourceSnippet": "const commander=require(\"commander\");\ncommander.option(\"-d, --debug\");"
+  },
+  {
+    "id": "commander_commonjs_global_export_removed_robust_control",
+    "family": "commander-commonjs-global-export-removed",
+    "split": "dev",
+    "label": "negative",
+    "caseRole": "robustness_control",
+    "package": "commander",
+    "versions": {
+      "old": "11.1.0",
+      "new": "12.1.0"
+    },
+    "sourceUrl": "https://github.com/tj/commander.js/blob/master/CHANGELOG.md",
+    "behavior": "availability of Command methods directly on the CommonJS package root",
+    "noteText": "Commander 12 removed the CommonJS default export of the global Command instance; CommonJS callers must use the named program export or an explicit Command instance.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "expected": {
+      "old": "function",
+      "new": "function"
+    },
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/commander_commonjs_global_export_removed_robust_control",
+    "sourceSnippet": "const {program:cli}=require(\"commander\");\ncli.option(\"-d, --debug\");"
   }
 ]

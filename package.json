@@ -1,9 +1,34 @@
 {
   "name": "upgrade-radar",
-  "version": "0.1.4",
-  "private": true,
-  "description": "Evidence-linked dependency upgrade review for TypeScript, powered by Jev",
+  "version": "0.1.5",
+  "private": false,
+  "description": "Evidence-linked dependency upgrade review for TypeScript with optional bounded Jev",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GaneshVG18/upgrade-radar.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GaneshVG18/upgrade-radar/issues"
+  },
+  "homepage": "https://github.com/GaneshVG18/upgrade-radar#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "dependency-updates",
+    "static-analysis",
+    "typescript",
+    "migration",
+    "jev"
+  ],
   "type": "module",
+  "files": [
+    "dist",
+    "examples/notes",
+    "README.md",
+    "LICENSE"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -12,33 +37,44 @@
       "import": "./dist/index.js"
     }
   },
-  "bin": {"upgrade-radar": "dist/cli.js"},
-  "engines": {"node": ">=24 <25"},
+  "bin": {
+    "upgrade-radar": "dist/cli.js"
+  },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
+    "prepare": "npm run build",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "oxlint src tests scripts",
     "test": "npm run build && vitest run",
     "test:compat": "node scripts/compat.mjs",
+    "test:package": "node scripts/package-smoke.mjs",
     "corpus:generate": "node scripts/build-corpus.mjs",
     "notes:manifest": "node scripts/update-notes-manifest.mjs",
     "smoke": "node scripts/smoke.mjs",
     "demo": "node dist/cli.js demo --out artifacts/demo",
+    "review": "node dist/cli.js review",
     "eval:live": "node scripts/eval-live.mjs",
-    "check": "npm run typecheck && npm run lint && npm test && npm run test:compat && npm run build && npm run smoke"
+    "check": "npm run typecheck && npm run lint && npm test && npm run test:compat && npm run build && npm run smoke && npm run test:package"
   },
   "dependencies": {
     "@typesafe-ai/sdk": "0.6.0",
     "marked": "18.0.13",
-    "semver": "7.8.5"
+    "semver": "7.8.5",
+    "typescript": "5.9.3"
   },
   "devDependencies": {
     "@types/node": "24.10.1",
     "@types/semver": "7.7.1",
+    "commander11": "npm:commander@11.1.0",
+    "commander12": "npm:commander@12.1.0",
     "express4": "npm:express@4.21.2",
     "express5": "npm:express@5.1.0",
+    "glob10": "npm:glob@10.4.5",
+    "glob8": "npm:glob@8.1.0",
     "oxlint": "1.83.0",
-    "typescript": "5.9.3",
     "vitest": "4.1.11",
     "zod3": "npm:zod@3.25.76",
     "zod4": "npm:zod@4.1.5"

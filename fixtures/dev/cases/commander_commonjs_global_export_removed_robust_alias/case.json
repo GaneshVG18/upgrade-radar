@@ -1,0 +1,22 @@
+{
+  "id": "commander_commonjs_global_export_removed_robust_alias",
+  "family": "commander-commonjs-global-export-removed",
+  "split": "dev",
+  "label": "positive",
+  "caseRole": "robustness",
+  "package": "commander",
+  "versions": {
+    "old": "11.1.0",
+    "new": "12.1.0"
+  },
+  "sourceUrl": "https://github.com/tj/commander.js/blob/master/CHANGELOG.md",
+  "behavior": "availability of Command methods directly on the CommonJS package root",
+  "noteText": "Commander 12 removed the CommonJS default export of the global Command instance; CommonJS callers must use the named program export or an explicit Command instance.",
+  "sourceFile": "source.js",
+  "noteFile": "note.md",
+  "expected": {
+    "old": "function",
+    "new": "undefined"
+  },
+  "command": "npm run test:compat"
+}

@@ -8,7 +8,7 @@ import { sha256 } from "../../src/core/util.js";
 import { BaselineProvider } from "../../src/providers/baseline.js";
 import { renderHtml, validateReport } from "../../src/report/render.js";
 import { workingTreeSnapshot } from "../../src/source/inventory.js";
-import type { Provider, Report } from "../../src/types.js";
+import type { Finding, Provider, Report } from "../../src/types.js";
 
 function fixtureRepo() {
   const root = mkdtempSync(path.join(tmpdir(), "upgrade-radar-int-"));
@@ -69,6 +69,32 @@ describe("analysis integration", () => {
     await expect(analyzeUpgrade({ repo: root, upgrade: { package: "express", from: "4.21.2", to: "5.2.0" }, notesPath: path.join(root, "notes.md"), provider: new BaselineProvider(), runMode: "baseline" })).rejects.toThrow(/Notes applicability mismatch/);
   });
 
+  it("marks incomplete dependency facts as incomplete instead of a clean report", async () => {
+    const missingLock = fixtureRepo();
+    unlinkSync(path.join(missingLock, "package-lock.json"));
+    execFileSync("git", ["add", "-u"], { cwd: missingLock });
+    execFileSync("git", ["commit", "-qm", "remove lockfile"], { cwd: missingLock });
+    const missingResult = await analyzeUpgrade({ repo: missingLock, upgrade: { package: "express", from: "4.21.2", to: "5.1.0" }, notesPath: path.join(missingLock, "notes.md"), provider: new BaselineProvider(), runMode: "baseline" });
+    expect(missingResult.report.complete).toBe(false);
+    expect(missingResult.report.coverageLimitations).toContain("package_lock_missing");
+
+    const workspaceRoot = fixtureRepo();
+    writeFileSync(path.join(workspaceRoot, "package.json"), '{"name":"fixture","workspaces":["packages/*"],"dependencies":{"express":"4.21.2"}}\n');
+    execFileSync("git", ["add", "package.json"], { cwd: workspaceRoot });
+    execFileSync("git", ["commit", "-qm", "workspace root"], { cwd: workspaceRoot });
+    const workspaceResult = await analyzeUpgrade({ repo: workspaceRoot, upgrade: { package: "express", from: "4.21.2", to: "5.1.0" }, notesPath: path.join(workspaceRoot, "notes.md"), provider: new BaselineProvider(), runMode: "baseline" });
+    expect(workspaceResult.report.complete).toBe(false);
+    expect(workspaceResult.report.coverageLimitations).toContain("npm_workspaces_not_supported");
+  });
+
+  it("rejects package.json ranges that disagree with the explicit from version", async () => {
+    const root = fixtureRepo();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"express":"^5.0.0"}}\n');
+    execFileSync("git", ["add", "package.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "mismatched range"], { cwd: root });
+    await expect(analyzeUpgrade({ repo: root, upgrade: { package: "express", from: "4.21.2", to: "5.1.0" }, notesPath: path.join(root, "notes.md"), provider: new BaselineProvider(), runMode: "baseline" })).rejects.toThrow(/does not include --from/);
+  });
+
   it("continues a partial provider batch and preserves successful rows", async () => {
     const root = fixtureRepo();
     writeFileSync(path.join(root, "src/app.ts"), 'import express from "express";\nconst app=express();\napp.get("/q1",(req,res)=>res.json(req.query.a));\napp.get("/q2",(req,res)=>res.json(req.query.b));\n');
@@ -102,6 +128,52 @@ describe("analysis integration", () => {
     expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
   });
 
+  it("renders shared evidence as unique per-finding navigation targets", async () => {
+    const root = fixtureRepo();
+    const { report } = await analyzeUpgrade({ repo: root, upgrade: { package: "express", from: "4.21.2", to: "5.1.0" }, notesPath: path.join(root, "notes.md"), provider: new BaselineProvider(), runMode: "baseline" });
+    const first = report.findings[0]!;
+    const firstNote = first.note!;
+    const linkedHtml = renderHtml(report);
+    expect(linkedHtml).toContain('href="#finding-1-note" data-evidence-target="finding-1-note"');
+    expect(linkedHtml).toContain('href="#finding-1-code" data-evidence-target="finding-1-code"');
+    expect(linkedHtml).toContain('title="Open original source"');
+    const localEvidence: Finding = { ...first, code: { ...first.code }, note: { ...firstNote } };
+    delete localEvidence.code.url;
+    delete localEvidence.note!.url;
+    const shared: Report = {
+      ...report,
+      findings: [localEvidence, { ...localEvidence, id: `${first.id}-second` }],
+      counts: { ...report.counts, findings: 2, candidates: 2 }
+    };
+    const html = renderHtml(shared);
+    expect(html.match(/id="finding-1-note"/g)).toHaveLength(1);
+    expect(html.match(/id="finding-2-note"/g)).toHaveLength(1);
+    expect(html).toContain('href="#finding-1-note" data-evidence-target="finding-1-note"');
+    expect(html).toContain('href="#finding-2-note" data-evidence-target="finding-2-note"');
+    expect(html.match(new RegExp(`data-provenance-id="${firstNote.id}"`, "g"))).toHaveLength(2);
+    expect(html).toContain("document.addEventListener('keydown'");
+    expect(html).toContain("event.key!=='Enter'&&event.key!==' '");
+    expect(html).toContain("details.open=!details.open");
+  });
+
+  it("separates finding unknowns from unresolved coverage and keeps run context visible", async () => {
+    const root = fixtureRepo();
+    const { report } = await analyzeUpgrade({ repo: root, upgrade: { package: "express", from: "4.21.2", to: "5.1.0" }, notesPath: path.join(root, "notes.md"), provider: new BaselineProvider(), runMode: "baseline" });
+    const withCoverageGap: Report = {
+      ...report,
+      complete: false,
+      unknownItems: ["unsupported_package_reference:express:dynamic_import:src/app.ts:1"],
+      counts: { ...report.counts, unknown: 1 }
+    };
+    const html = renderHtml(withCoverageGap);
+    expect(html).toContain("Deterministic baseline");
+    expect(html).toContain("Revision <strong>");
+    expect(html).toContain('class="generated"');
+    expect(html).toContain('<strong class="summary-value">0</strong><span class="summary-label">Unknown findings</span>');
+    expect(html).toContain('<strong class="summary-value">1</strong><span class="summary-label">Coverage unknowns</span>');
+    expect(html).toContain("Unresolved coverage above the queue remains visible while filtering.");
+  });
+
   it("uses stable CLI exit codes and never silently falls back from Jev", () => {
     const help = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "--help"], { encoding: "utf8" });
     expect(help.status).toBe(0);
@@ -113,12 +185,182 @@ describe("analysis integration", () => {
     const missingKey = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "analyze", "--repo", fixtureRepo(), "--package", "express", "--from", "4.21.2", "--to", "5.1.0", "--notes", path.join(fixtureRepo(), "notes.md"), "--provider", "jev"], { encoding: "utf8", env: { ...process.env, TYPESAFE_API_KEY: "" } });
     expect(missingKey.status).toBe(69);
     expect(missingKey.stderr).toMatch(/requires TYPESAFE_API_KEY/);
+    const dryRoot = fixtureRepo();
+    const dryWithoutKey = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "analyze", "--repo", dryRoot, "--package", "express", "--from", "4.21.2", "--to", "5.1.0", "--notes", path.join(dryRoot, "notes.md"), "--provider", "jev", "--dry-run"], { encoding: "utf8", env: { ...process.env, TYPESAFE_API_KEY: "" } });
+    expect(dryWithoutKey.status).toBe(0);
+    expect(JSON.parse(dryWithoutKey.stdout)).toMatchObject({ runMode: "dry_run", candidateCount: 1 });
     const invalid = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "wat"], { encoding: "utf8" });
     expect(invalid.status).toBe(64);
     const incompleteRoot = fixtureRepo();
     unlinkSync(path.join(incompleteRoot, "notes-manifest.json"));
     const incomplete = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "analyze", "--repo", incompleteRoot, "--package", "express", "--from", "4.21.2", "--to", "5.1.0", "--notes", path.join(incompleteRoot, "notes.md"), "--provider", "baseline", "--out", path.join(incompleteRoot, "out")], { encoding: "utf8" });
     expect(incomplete.status).toBe(2);
+  });
+
+  it("reviews the current repository out of the box with bundled notes and inferred refs", () => {
+    const root = fixtureRepo();
+    execFileSync("git", ["checkout", "-qb", "feature/upgrade"], { cwd: root });
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"express":"5.1.0"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"express":"5.1.0"}},"node_modules/express":{"version":"5.1.0"}}}\n');
+    execFileSync("git", ["add", "package.json", "package-lock.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "upgrade express"], { cwd: root });
+    writeFileSync(path.join(root, "src/extra.ts"), "export const laterFeatureWork = true;\n");
+    execFileSync("git", ["add", "src/extra.ts"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "later feature work"], { cwd: root });
+
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "review"], { cwd: root, encoding: "utf8" });
+    expect(run.status).toBe(0);
+    expect(run.stdout).toMatch(/Upgrade Radar: 1 upgrade\(s\), 1 review/);
+    const report = JSON.parse(readFileSync(path.join(root, "upgrade-radar-report", "report.json"), "utf8")) as Report;
+    expect(report.complete).toBe(true);
+    expect(report.upgrades).toEqual([{ package: "express", from: "4.21.2", to: "5.1.0" }]);
+    expect(report.findings).toHaveLength(1);
+    expect(report.findings[0]?.changeFamily).toBe("express-query-parser-default");
+    expect(report.noteProvenance[0]).toMatchObject({
+      package: "express",
+      sourceUrl: "https://expressjs.com/en/guide/migrating-5.html",
+      verified: true
+    });
+  });
+
+  it("treats a zero-config review with no dependency changes as a clean no-op", () => {
+    const root = fixtureRepo();
+    writeFileSync(path.join(root, "src/extra.ts"), "export const unchangedDependency = true;\n");
+    execFileSync("git", ["add", "src/extra.ts"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "application-only change"], { cwd: root });
+
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "review"], { cwd: root, encoding: "utf8" });
+    expect(run.status).toBe(0);
+    expect(run.stdout).toMatch(/no direct dependency version changes/i);
+    const report = JSON.parse(readFileSync(path.join(root, "upgrade-radar-report", "report.json"), "utf8")) as Report;
+    expect(report.complete).toBe(true);
+    expect(report.upgrades).toEqual([]);
+    expect(report.findings).toEqual([]);
+    expect(report.unknownItems).toEqual([]);
+  });
+
+  it("reports manifest/lock disagreement instead of a clean no-change result", () => {
+    const root = fixtureRepo();
+    const base = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"express":"5.1.0"}}\n');
+    execFileSync("git", ["add", "package.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "change manifest without lockfile"], { cwd: root });
+    const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "review", "--base", base, "--head", head], { cwd: root, encoding: "utf8" });
+    expect(run.status).toBe(2);
+    expect(run.stdout).not.toMatch(/no direct dependency version changes/i);
+    const report = JSON.parse(readFileSync(path.join(root, "upgrade-radar-report", "report.json"), "utf8")) as Report;
+    const gap = "dependency_diff_manifest_lock_disagreement:express:4.21.2->5.1.0:locked@4.21.2";
+    expect(report.complete).toBe(false);
+    expect(report.coverageLimitations).toContain(gap);
+    expect(report.unknownItems).toContain(gap);
+  });
+
+  it("turns unsupported-package usage into unknown manual-review starting points", () => {
+    const root = fixtureRepo();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"react":"18.2.0"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"react":"18.2.0"}},"node_modules/react":{"version":"18.2.0"}}}\n');
+    writeFileSync(path.join(root, "src/app.tsx"), 'import React from "react";\nexport const node=React.createElement("div");\n');
+    execFileSync("git", ["add", "."], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "react baseline"], { cwd: root });
+    const base = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"react":"19.0.0"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"react":"19.0.0"}},"node_modules/react":{"version":"19.0.0"}}}\n');
+    execFileSync("git", ["add", "package.json", "package-lock.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "upgrade react"], { cwd: root });
+    const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+    const notesDir = path.join(root, "empty-notes");
+    mkdirSync(notesDir);
+    const out = mkdtempSync(path.join(tmpdir(), "upgrade-radar-react-generic-"));
+
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "diff", "--repo", root, "--base", base, "--head", head, "--notes-dir", notesDir, "--provider", "baseline", "--out", out], { encoding: "utf8" });
+    expect(run.status).toBe(2);
+    const report = JSON.parse(readFileSync(path.join(out, "report.json"), "utf8")) as Report;
+    expect(report.complete).toBe(false);
+    expect(report.upgrades).toEqual([{ package: "react", from: "18.2.0", to: "19.0.0" }]);
+    expect(report.findings.length).toBeGreaterThan(0);
+    expect(report.findings.every((finding) => finding.disposition === "unknown")).toBe(true);
+    expect(report.findings[0]).toMatchObject({
+      package: "react",
+      coverage: "generic-adapter",
+      resolvedSymbol: "React.createElement",
+      bindingPath: "react -> default as React -> React.createElement"
+    });
+    expect(report.findings[0]?.note).toBeUndefined();
+    expect(report.findings[0]?.code.path).toBe("src/app.tsx");
+    expect(report.unknownItems).toContain("missing_applicable_notes:react:18.2.0->19.0.0");
+  });
+
+  it("reviews bundled Glob and Commander migrations through their first-class adapters", () => {
+    const root = fixtureRepo();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"glob":"8.1.0","commander":"11.1.0"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"glob":"8.1.0","commander":"11.1.0"}},"node_modules/glob":{"version":"8.1.0"},"node_modules/commander":{"version":"11.1.0"}}}\n');
+    writeFileSync(path.join(root, "src/app.ts"), 'import glob from "glob";\nconst commander=require("commander");\nexport const matches=glob("*.js");\ncommander.option("-d, --debug");\n');
+    execFileSync("git", ["add", "."], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "glob and commander baseline"], { cwd: root });
+    const base = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"glob":"10.4.5","commander":"12.1.0"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"glob":"10.4.5","commander":"12.1.0"}},"node_modules/glob":{"version":"10.4.5"},"node_modules/commander":{"version":"12.1.0"}}}\n');
+    execFileSync("git", ["add", "package.json", "package-lock.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "upgrade glob and commander"], { cwd: root });
+    const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "review", "--base", base, "--head", head], { cwd: root, encoding: "utf8" });
+    expect(run.status).toBe(0);
+    const report = JSON.parse(readFileSync(path.join(root, "upgrade-radar-report", "report.json"), "utf8")) as Report;
+    expect(report.complete).toBe(true);
+    expect(report.upgrades).toEqual([
+      { package: "glob", from: "8.1.0", to: "10.4.5" },
+      { package: "commander", from: "11.1.0", to: "12.1.0" }
+    ]);
+    expect(report.findings.filter((finding) => finding.disposition === "review").map((finding) => finding.changeFamily).sort()).toEqual([
+      "commander-commonjs-global-export-removed",
+      "glob-default-export-removed"
+    ]);
+    expect(report.findings.every((finding) => finding.coverage === "first-class-adapter")).toBe(true);
+  });
+
+  it("keeps generic reviewed-note pairs unknown in baseline but lets a bounded live provider judge them", async () => {
+    const root = fixtureRepo();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"react":"19.0.0"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"react":"19.0.0"}},"node_modules/react":{"version":"19.0.0"}}}\n');
+    writeFileSync(path.join(root, "src/app.tsx"), 'import React from "react";\nexport const node=React.createElement("div");\n');
+    const note = '---\npackage: react\nfrom: 18.2.0\nto: 19.0.0\nsource: https://example.com/react-19\nretrieved: 2026-09-20\n---\n\n# Reviewed change\n\nFamily: generic\n\nA reviewed React migration behavior changed.\n';
+    const notesDir = path.join(root, "react-notes");
+    mkdirSync(notesDir);
+    writeFileSync(path.join(notesDir, "react.md"), note);
+    writeFileSync(path.join(notesDir, "notes-manifest.json"), JSON.stringify({ documents: [{ file: "react.md", package: "react", from: "18.2.0", to: "19.0.0", sourceUrl: "https://example.com/react-19", retrieved: "2026-09-20", sha256: sha256(note) }] }));
+    execFileSync("git", ["add", "."], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "generic react fixture"], { cwd: root });
+
+    const baseline = await analyzeUpgrade({ repo: root, upgrade: { package: "react", from: "18.2.0", to: "19.0.0" }, notesPath: path.join(notesDir, "react.md"), provider: new BaselineProvider(), runMode: "baseline", skipDependencyValidation: true });
+    expect(baseline.report.findings[0]?.disposition).toBe("unknown");
+    expect(baseline.report.findings[0]?.coverage).toBe("generic-adapter");
+
+    const liveProvider: Provider = {
+      name: "jev",
+      payload: (candidate) => new BaselineProvider().payload(candidate),
+      judge: async () => ({ disposition: "review", reasons: ["test_bounded_generic_pair"] })
+    };
+    const live = await analyzeUpgrade({ repo: root, upgrade: { package: "react", from: "18.2.0", to: "19.0.0" }, notesPath: path.join(notesDir, "react.md"), provider: liveProvider, runMode: "jev", skipDependencyValidation: true });
+    expect(live.report.findings[0]?.disposition).toBe("review");
+    expect(live.report.findings[0]?.coverage).toBe("generic-adapter");
+  });
+
+  it("scaffolds reviewed notes without overwriting existing files", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "upgrade-radar-scaffold-"));
+    const out = path.join(root, "react-19.md");
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "notes", "scaffold", "--package", "react", "--from", "18.2.0", "--to", "19.0.0", "--source", "https://react.dev/blog/2024/04/25/react-19-upgrade-guide", "--out", out], { encoding: "utf8" });
+    expect(run.status).toBe(0);
+    const text = readFileSync(out, "utf8");
+    expect(text).toContain("package: react");
+    expect(text).toContain("source: https://react.dev/blog/2024/04/25/react-19-upgrade-guide");
+    expect(text).toContain("Family: TODO");
+    expect(run.stdout).toContain("no network request was made");
+    const second = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "notes", "scaffold", "--package", "react", "--from", "18.2.0", "--to", "19.0.0", "--source", "https://react.dev/blog/2024/04/25/react-19-upgrade-guide", "--out", out], { encoding: "utf8" });
+    expect(second.status).toBe(64);
   });
 
   it("rejects tracked source symlinks and reports source-size truncation", () => {
@@ -157,6 +399,93 @@ describe("analysis integration", () => {
     expect(run.stderr).not.toMatch(/No such remote/);
     const after = execFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" });
     expect(after).toBe(before);
+  });
+
+  it("keeps unsupported diff dependency facts visible and incomplete", () => {
+    const missingLockRoot = fixtureRepo();
+    const missingBase = execFileSync("git", ["rev-parse", "HEAD"], { cwd: missingLockRoot, encoding: "utf8" }).trim();
+    writeFileSync(path.join(missingLockRoot, "package.json"), '{"name":"fixture","dependencies":{"express":"5.1.0"}}\n');
+    unlinkSync(path.join(missingLockRoot, "package-lock.json"));
+    execFileSync("git", ["add", "-A"], { cwd: missingLockRoot });
+    execFileSync("git", ["commit", "-qm", "upgrade without lock"], { cwd: missingLockRoot });
+    const missingHead = execFileSync("git", ["rev-parse", "HEAD"], { cwd: missingLockRoot, encoding: "utf8" }).trim();
+    const missingOut = mkdtempSync(path.join(tmpdir(), "upgrade-radar-diff-missing-lock-"));
+    const missingRun = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "diff", "--repo", missingLockRoot, "--base", missingBase, "--head", missingHead, "--notes-dir", missingLockRoot, "--provider", "baseline", "--out", missingOut], { encoding: "utf8" });
+    expect(missingRun.status).toBe(2);
+    const missingReport = JSON.parse(readFileSync(path.join(missingOut, "report.json"), "utf8")) as Report;
+    expect(missingReport.complete).toBe(false);
+    expect(missingReport.coverageLimitations).toContain("dependency_diff_head_package_lock_missing");
+    expect(missingReport.unknownItems).toContain("dependency_diff_unresolved_direct_version:express");
+
+    const workspaceRoot = fixtureRepo();
+    writeFileSync(path.join(workspaceRoot, "package.json"), '{"name":"fixture","workspaces":["packages/*"],"dependencies":{"express":"4.21.2"}}\n');
+    execFileSync("git", ["add", "package.json"], { cwd: workspaceRoot });
+    execFileSync("git", ["commit", "-qm", "workspace baseline"], { cwd: workspaceRoot });
+    const workspaceBase = execFileSync("git", ["rev-parse", "HEAD"], { cwd: workspaceRoot, encoding: "utf8" }).trim();
+    writeFileSync(path.join(workspaceRoot, "package.json"), '{"name":"fixture","workspaces":["packages/*"],"dependencies":{"express":"5.1.0"}}\n');
+    writeFileSync(path.join(workspaceRoot, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"express":"5.1.0"}},"node_modules/express":{"version":"5.1.0"}}}\n');
+    execFileSync("git", ["add", "package.json", "package-lock.json"], { cwd: workspaceRoot });
+    execFileSync("git", ["commit", "-qm", "workspace upgrade"], { cwd: workspaceRoot });
+    const workspaceHead = execFileSync("git", ["rev-parse", "HEAD"], { cwd: workspaceRoot, encoding: "utf8" }).trim();
+    const workspaceOut = mkdtempSync(path.join(tmpdir(), "upgrade-radar-diff-workspace-"));
+    const workspaceRun = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "diff", "--repo", workspaceRoot, "--base", workspaceBase, "--head", workspaceHead, "--notes-dir", workspaceRoot, "--provider", "baseline", "--out", workspaceOut], { encoding: "utf8" });
+    expect(workspaceRun.status).toBe(2);
+    const workspaceReport = JSON.parse(readFileSync(path.join(workspaceOut, "report.json"), "utf8")) as Report;
+    expect(workspaceReport.upgrades).toContainEqual({ package: "express", from: "4.21.2", to: "5.1.0" });
+    expect(workspaceReport.coverageLimitations).toContain("npm_workspaces_not_supported");
+  });
+
+  it("does not treat a dependency downgrade as an upgrade", () => {
+    const root = fixtureRepo();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"express":"5.1.0"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"express":"5.1.0"}},"node_modules/express":{"version":"5.1.0"}}}\n');
+    execFileSync("git", ["add", "package.json", "package-lock.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "express five baseline"], { cwd: root });
+    const base = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"express":"4.21.2"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"express":"4.21.2"}},"node_modules/express":{"version":"4.21.2"}}}\n');
+    execFileSync("git", ["add", "package.json", "package-lock.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "downgrade express"], { cwd: root });
+    const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+    const out = mkdtempSync(path.join(tmpdir(), "upgrade-radar-diff-downgrade-"));
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "diff", "--repo", root, "--base", base, "--head", head, "--notes-dir", root, "--provider", "baseline", "--out", out], { encoding: "utf8" });
+    expect(run.status).toBe(2);
+    const report = JSON.parse(readFileSync(path.join(out, "report.json"), "utf8")) as Report;
+    expect(report.upgrades).toEqual([]);
+    expect(report.unknownItems).toContain("dependency_diff_non_upgrade_or_invalid_semver:express:5.1.0->4.21.2");
+  });
+
+  it("does not follow note-manifest paths outside the supplied notes directory", () => {
+    const root = fixtureRepo();
+    const base = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"express":"5.1.0"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"express":"5.1.0"}},"node_modules/express":{"version":"5.1.0"}}}\n');
+    execFileSync("git", ["add", "package.json", "package-lock.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "upgrade express"], { cwd: root });
+    const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+
+    const notesDir = path.join(root, "reviewed-notes");
+    mkdirSync(notesDir);
+    const outside = path.join(root, "outside.md");
+    const note = readFileSync(path.join(root, "notes.md"), "utf8");
+    writeFileSync(outside, note);
+    writeFileSync(path.join(notesDir, "notes-manifest.json"), JSON.stringify({ documents: [{ file: "../outside.md", package: "express", from: "4.21.2", to: "5.1.0" }] }));
+    const out = mkdtempSync(path.join(tmpdir(), "upgrade-radar-note-escape-"));
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "diff", "--repo", root, "--base", base, "--head", head, "--notes-dir", notesDir, "--provider", "baseline", "--out", out], { encoding: "utf8" });
+
+    expect(run.status).toBe(2);
+    const report = JSON.parse(readFileSync(path.join(out, "report.json"), "utf8")) as Report;
+    expect(report.noteProvenance).toEqual([]);
+    expect(report.unknownItems).toContain("missing_applicable_notes:express:4.21.2->5.1.0");
+
+    symlinkSync("../outside.md", path.join(notesDir, "escape.md"));
+    writeFileSync(path.join(notesDir, "notes-manifest.json"), JSON.stringify({ documents: [{ file: "escape.md", package: "express", from: "4.21.2", to: "5.1.0" }] }));
+    const symlinkOut = mkdtempSync(path.join(tmpdir(), "upgrade-radar-note-symlink-"));
+    const symlinkRun = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "diff", "--repo", root, "--base", base, "--head", head, "--notes-dir", notesDir, "--provider", "baseline", "--out", symlinkOut], { encoding: "utf8" });
+    expect(symlinkRun.status).toBe(2);
+    const symlinkReport = JSON.parse(readFileSync(path.join(symlinkOut, "report.json"), "utf8")) as Report;
+    expect(symlinkReport.noteProvenance).toEqual([]);
+    expect(symlinkReport.unknownItems).toContain("missing_applicable_notes:express:4.21.2->5.1.0");
   });
 
   it("keeps dependency upgrades visible and incomplete when supplied notes are missing", () => {

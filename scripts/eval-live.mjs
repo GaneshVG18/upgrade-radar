@@ -1,7 +1,7 @@
 import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { analyzeUsageSites } from "../dist/adapters/index.js";
+import { analyzeUsageSites, unsupportedPackageReferences } from "../dist/adapters/index.js";
 import { sha256, shortHash } from "../dist/core/util.js";
 import { BaselineProvider } from "../dist/providers/baseline.js";
 import { JevProvider } from "../dist/providers/jev.js";
@@ -48,10 +48,12 @@ function candidateFor(item) {
   const content = readFileSync(sourcePath, "utf8");
   const source = { path: item.sourceFile, content, sha256: sha256(content) };
   const matches = analyzeUsageSites([source], item.package).filter((site) => site.family === item.family);
-  if (matches.length === 0) return { candidate: undefined, matchCount: 0 };
+  const unsupportedReferences = unsupportedPackageReferences([source], item.package);
+  if (matches.length === 0) return { candidate: undefined, matchCount: 0, unsupportedReferences };
   const usage = matches[0];
   return {
     matchCount: matches.length,
+    unsupportedReferences,
     candidate: {
       id: `eval-${shortHash(`${item.id}:${usage.span.id}`)}`,
       upgrade: { package: item.package, from: item.versions.old, to: item.versions.new },
@@ -105,7 +107,7 @@ function summarize(rows, decisionKey, predicate = () => true) {
 const rows = [];
 const startedAt = Date.now();
 for (const item of corpus) {
-  const { candidate, matchCount } = candidateFor(item);
+  const { candidate, matchCount, unsupportedReferences } = candidateFor(item);
   const row = {
     id: item.id,
     family: item.family,
@@ -114,6 +116,7 @@ for (const item of corpus) {
     label: item.label,
     candidateRetrieved: Boolean(candidate),
     candidateMatchCount: matchCount,
+    unsupportedReferences,
     baseline: undefined,
     jev: undefined
   };
@@ -142,7 +145,7 @@ const report = {
   generatedAt: new Date().toISOString(),
   durationMs: Date.now() - startedAt,
   labelsEstablishedFromTrackedCorpus: true,
-  splitRule: "Express change families are development; Zod change families are sealed heldout. No heldout tuning is performed by this script.",
+  splitRule: "Express, Glob, and Commander change families are development; Zod change families are sealed heldout. No heldout tuning is performed by this script.",
   corpus: {
     totalCases: corpus.length,
     families: [...new Set(corpus.map((item) => item.family))],
@@ -169,8 +172,19 @@ const report = {
   },
   endToEnd: {
     retrievalMissCaseIds: rows.filter((row) => !row.candidateRetrieved).map((row) => row.id),
+    retrievalMissesWithExplicitUnsupportedCoverage: rows
+      .filter((row) => !row.candidateRetrieved && row.unsupportedReferences.length > 0)
+      .map((row) => ({ id: row.id, unsupportedReferences: row.unsupportedReferences })),
+    silentUnknownCaseIds: rows
+      .filter((row) => row.label === "unknown" && !row.candidateRetrieved && row.unsupportedReferences.length === 0)
+      .map((row) => row.id),
     jevProviderFailureCaseIds: rows.filter((row) => row.jev?.status === "provider_failure").map((row) => row.id),
-    unknownLabelCases: rows.filter((row) => row.label === "unknown").map((row) => ({ id: row.id, candidateRetrieved: row.candidateRetrieved, jevDisposition: row.jev?.disposition ?? null }))
+    unknownLabelCases: rows.filter((row) => row.label === "unknown").map((row) => ({
+      id: row.id,
+      candidateRetrieved: row.candidateRetrieved,
+      unsupportedReferences: row.unsupportedReferences,
+      jevDisposition: row.jev?.disposition ?? null
+    }))
   },
   resolvedModels: [...new Set(rows.map((row) => row.jev?.semantic?.model).filter(Boolean))],
   rows

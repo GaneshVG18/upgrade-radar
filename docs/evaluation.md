@@ -4,11 +4,11 @@ Engineering correctness and semantic evaluation are separate gates.
 
 ## Compatibility corpus
 
-The authored corpus contains 48 isolated cases across eight documented change families. Families, rather than paraphrases, define the development/held-out split: the four Express families are under `fixtures/dev/`; the four Zod families are under `fixtures/holdout/`. `fixtures/manifest.json` records each case's exact package versions, upstream source URL, fixture path, and hashes for its source, note, and metadata.
+The authored corpus contains 60 isolated cases across ten documented change families. Families, rather than paraphrases, define the development/held-out split: the four Express families plus the Glob and Commander families are under `fixtures/dev/`; the four Zod families remain under `fixtures/holdout/`. `fixtures/manifest.json` records each case's exact package versions, upstream source URL, fixture path, and hashes for its source, note, and metadata.
 
 Each family has a canonical positive, a canonical negative control, an intentionally unknown case, and marked robustness variants. Positive/negative expected outputs are exercised against pinned old/new packages by `npm run test:compat`. Unknown cases document the missing evidence. Robustness variants are not counted as independent behavior families or independent statistical samples.
 
-The eight families are Express query-parser default, wildcard naming, `app.del` removal, `req.param` removal, and Zod optional defaults, default short-circuiting, infinity rejection, and one-argument `z.record` migration.
+The ten families are Express query-parser default, wildcard naming, `app.del` removal, `req.param` removal; Zod optional defaults, default short-circuiting, infinity rejection, and one-argument `z.record` migration; Glob callable default/root export removal; and Commander CommonJS global-program export removal.
 
 ## Semantic layer
 
