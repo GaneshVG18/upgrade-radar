@@ -1,6 +1,6 @@
 {
   "name": "upgrade-radar",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": false,
   "description": "Evidence-linked dependency upgrade review for TypeScript with optional bounded Jev",
   "license": "MIT",

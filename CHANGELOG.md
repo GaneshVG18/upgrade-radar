@@ -1,7 +1,17 @@
 # Changelog
 
-## Unreleased
+## 0.1.6
 
+- Corrected the install instructions carried inside the published npm package. The `0.1.5` tarball's README predated registry publication and still told readers the package was unpublished and to install from the Git tag. Package code is unchanged from `0.1.5`.
+
+## 0.1.5
+
+- Added first-class reviewed transitions for Glob **8.1.0 → 10.4.5** and Commander **11.1.0 → 12.1.0**, bringing the authored corpus to 60 compatibility cases and 50 executable assertions across 10 behavior families.
+- Added generic resolved-usage starting points for packages without reviewed notes. Source analysis now runs even when no applicable note exists, and each row is reported as `unknown` under `generic-adapter` coverage with its resolved symbol and binding path, explicitly as a manual review starting point rather than a detected compatibility problem.
+- Fixed a silent miss where a direct dependency bumped in `package.json` but left unchanged in the lockfile was reported as "no direct dependency version changes" with a success exit. The manifest/lockfile disagreement is now an explicit unknown and the report is incomplete.
+- Relaxed the supported runtime to Node 24 or newer and added a Node 25 CI job so the supported range is tested rather than assumed.
+- Clarified on completion that exit `2` reports incomplete evidence coverage rather than a failed command.
+- Published the package to the npm registry so `npx upgrade-radar review` is the supported install path, and added verified launch media plus a GitHub Pages copy of the illustrative demo report.
 - Added a distribution smoke test that packs the project, installs only production dependencies in a clean runner, and executes zero-config review against a separate multi-commit consumer repository.
 - Added npm/GitHub package metadata and ignored the default local report directory in this repository.
 - Added a zero-config `review` command that defaults to the current repository, infers the comparison refs, uses bundled reviewed Express/Zod notes, runs the no-key baseline, and writes a ready-to-open report.
@@ -15,7 +25,7 @@
 - Private evaluation now records unresolved-wrapper coverage alongside retrieval misses so authored unknown cases cannot silently vanish from end-to-end accounting.
 - Made Jev dry-run credential-free because it only renders the redacted payload and sends no provider request.
 - Restricted diff-mode note discovery to regular files inside the supplied notes directory; manifest path escapes and note symlinks are ignored.
-- Enforced the documented Node 24 runtime during npm installs with `engine-strict`.
+- Enabled `engine-strict` for npm installs in this repository so the documented runtime floor is enforced.
 
 ## 0.1.4 — preview
 
