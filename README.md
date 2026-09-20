@@ -1,11 +1,14 @@
 # Upgrade Radar
 
 [![CI](https://github.com/GaneshVG18/upgrade-radar/actions/workflows/ci.yml/badge.svg)](https://github.com/GaneshVG18/upgrade-radar/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/upgrade-radar.svg)](https://www.npmjs.com/package/upgrade-radar)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **The dependency PR changed two lines. Which application behavior changed?**
 
 Upgrade Radar connects reviewed dependency migration notes to the unchanged application code that actually uses the affected package behavior. It returns a short evidence-linked review queue with exact code and note spans, explicit unknowns, and coverage limitations.
+
+**One command. No account or API key required for the deterministic baseline.**
 
 [See the standalone illustrative report →](https://ganeshvg18.github.io/upgrade-radar/demo/report.html)
 
@@ -32,7 +35,7 @@ For each supported upgrade it gives you:
 From the npm project you want to review, on Node 24 or newer:
 
 ```sh
-npx --yes --package=github:GaneshVG18/upgrade-radar#v0.1.5 upgrade-radar review
+npx upgrade-radar review
 ```
 
 That is the normal path. `review` uses the current repository and `HEAD`, infers the comparison base from a local `main`/`master` merge-base (falling back to `HEAD~1`), uses the bundled reviewed migration notes, and runs the deterministic no-key baseline. It writes `upgrade-radar-report/{report.html,report.md,report.json}`. No TypeSafe account or API key is required.
@@ -44,7 +47,13 @@ Upgrade Radar: 1 upgrade(s), 1 review, 0 no-direct-evidence, 0 unknown.
 Report: /path/to/project/upgrade-radar-report/report.html
 ```
 
-The npm package is prepared but not published yet. Until registry publication is complete, the release-tagged GitHub command above is the supported install path. For CI, pin the composite Action to the release tag shown below.
+For a reproducible release-pinned run:
+
+```sh
+npx --yes upgrade-radar@0.1.5 review
+```
+
+For CI, pin the composite Action to the release tag shown below.
 
 If there are no direct dependency version changes in the inferred comparison, the command succeeds with an empty report. If an upgrade is detected but reviewed notes or source coverage are insufficient, the report is incomplete and exits `2`. For packages without applicable reviewed notes, Upgrade Radar still lists resolved usage sites as manual review starting points; those rows are `unknown`, never findings of breakage.
 
