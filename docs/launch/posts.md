@@ -1,6 +1,14 @@
 # Launch posts — ready to use
 
-Every character count below was measured with X's own weighting (URLs count as 23 regardless of length). Nothing here has been posted.
+Every character count below is a **twitter-text v3 weighted length**: URLs count as 23 regardless of length, and characters outside the weight-100 ranges count as two. `→` (U+2192) is one of those, so each arrow costs two — the counts here include that. Verified against https://raw.githubusercontent.com/twitter/twitter-text/master/config/v3.json.
+
+Recheck them after any edit rather than counting by hand:
+
+```sh
+npm run posts:length -- docs/launch/posts.md
+```
+
+Nothing here has been posted.
 
 Rules applied to all copy: one primary action per post, no fake urgency, no unsupported benchmarks, no claim of comprehensive compatibility verification, and no request for a star until the tool has demonstrated something.
 
@@ -8,7 +16,7 @@ Rules applied to all copy: one primary action per post, no fake urgency, no unsu
 
 ## 1. Three standalone X posts
 
-### A — Concrete failure (269/280)
+### A — Concrete failure (271/280)
 
 ```text
 Express 4 → 5 changes the default query parser.
@@ -24,7 +32,7 @@ No error raised. The value is just gone.
 npx upgrade-radar review finds the line that reads it.
 ```
 
-### B — Maintainer workflow (273/280)
+### B — Maintainer workflow (274/280)
 
 ```text
 Dependabot opens express 4.21.2 → 5.1.0. The diff is two lines. The migration guide is not about your code.
@@ -49,7 +57,7 @@ Then it points at the line in your app that reads it.
 https://github.com/GaneshVG18/upgrade-radar
 ```
 
-### D — Minimal side-by-side (204/280)
+### D — Minimal side-by-side (206/280)
 
 ```text
 Same request. Different Express defaults.
@@ -67,7 +75,7 @@ Tightest of the four and the easiest to pair with the measured-output clip. Carr
 
 ### Recommended: **A**
 
-**Hypothesis.** The audience is not currently looking for a dependency-review tool, so a post describing the tool competes for attention it does not have. A post describing a *failure they can recognise* borrows attention from something they already worry about: an upgrade that does not crash. A crashes nothing, passes tests, and returns wrong data — which is the specific fear that makes people sit on major-version PRs.
+**Hypothesis.** The audience is not currently looking for a dependency-review tool, so a post describing the tool competes for attention it does not have. A post describing a *failure they can recognise* borrows attention from something they already worry about: an upgrade that changes behavior without raising an error. That silent-change fear is what makes people sit on major-version PRs for months.
 
 A also front-loads the concrete artifact (`req.query.filters = undefined`) rather than the product name, so a reader who scrolls past still leaves with a fact they can verify. The command appears once, at the end, as the only action.
 
@@ -209,7 +217,7 @@ Coverage is four reviewed transitions today; everything else is reported as expl
 
 ## 6. Replies to likely questions
 
-Each fits 280 characters with X weighting, so they work as replies on X as well as on HN, Reddit or GitHub.
+Each fits 280 weighted characters (longest is *On coverage* at 279), so they work as replies on X as well as on HN, Reddit or GitHub.
 
 **On coverage** — *"Does this only work for four packages?"*
 
