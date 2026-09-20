@@ -21,6 +21,7 @@ export interface EvidenceSpan {
 
 export interface NoteBlock {
   family: string;
+  heading: string;
   span: EvidenceSpan;
   text: string;
 }
@@ -46,6 +47,8 @@ export interface SourceFile {
 export interface SourceSnapshot {
   repoPath: string;
   revision: string;
+  repositoryPrefix: string;
+  sourceWebBase?: string;
   files: SourceFile[];
   scannedCount: number;
   skippedCount: number;
@@ -127,6 +130,7 @@ export interface ProviderPayload {
     from: string;
     to: string;
     note: string;
+    noteContext: string;
     noteFamily: string;
     sourceExcerpt: string;
     resolvedSymbol: string;

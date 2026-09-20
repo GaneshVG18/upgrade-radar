@@ -73,7 +73,7 @@ Code owns package identity, versions, source/note spans, hashes, redaction, caps
 ## GitHub Action
 
 ```yaml
-- uses: GaneshVG18/upgrade-radar@v0.1.0
+- uses: GaneshVG18/upgrade-radar@v0.1.1
   with:
     base: ${{ github.event.pull_request.base.sha }}
     head: ${{ github.event.pull_request.head.sha }}
@@ -85,7 +85,7 @@ The composite Action needs only read access to the checkout. It writes the repor
 
 ## Evidence and evaluation
 
-`npm run test:compat` executes 48 authored cases across eight documented Express/Zod change families. Positive and negative labels come from pinned old/new package behavior; unknown cases state the missing evidence. Robustness variants are marked and are not treated as independent samples. Live Jev evaluation output is intentionally private and is not published as a benchmark.
+`npm run test:compat` executes 48 authored cases across eight documented Express/Zod change families. Every case has an isolated fixture directory with source, reviewed note, case metadata, exact package versions, upstream provenance URL, and SHA-256 entries in `fixtures/manifest.json`. Positive and negative labels come from pinned old/new package behavior; unknown cases state the missing evidence. Robustness variants are marked and are not treated as independent samples. Live Jev evaluation output is intentionally private and is not published as a benchmark.
 
 More detail: [architecture](docs/architecture.md), [limitations](docs/limitations.md), [evaluation](docs/evaluation.md), [privacy](docs/privacy.md), and [comparison](docs/comparison.md).
 

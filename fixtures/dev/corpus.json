@@ -5,8 +5,16 @@
     "split": "dev",
     "label": "positive",
     "caseRole": "canonical",
-    "sourceSnippet": "const filters = req.query.filters;",
-    "noteFamily": "express-query-parser-default",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "nested query-string parsing under the default parser",
+    "noteText": "Express 5 uses the simple query parser by default. Code relying on nested query-string objects should be reviewed unless the extended parser is explicitly selected.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": {
         "status": 200,
@@ -17,7 +25,9 @@
         "body": "{\"a[b]\":\"1\"}"
       }
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_query_parser_default_positive",
+    "sourceSnippet": "import express from \"express\";\nconst app=express();\napp.get(\"/q\", (req, res) => res.json(req.query.filters));"
   },
   {
     "id": "express_query_parser_default_negative",
@@ -25,8 +35,16 @@
     "split": "dev",
     "label": "negative",
     "caseRole": "canonical_control",
-    "sourceSnippet": "configured.set(\"query parser\", \"extended\")",
-    "noteFamily": "express-query-parser-default",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "nested query-string parsing under the default parser",
+    "noteText": "Express 5 uses the simple query parser by default. Code relying on nested query-string objects should be reviewed unless the extended parser is explicitly selected.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": {
         "status": 200,
@@ -37,7 +55,9 @@
         "body": "{\"a\":{\"b\":\"1\"}}"
       }
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_query_parser_default_negative",
+    "sourceSnippet": "import express from \"express\";\nconst app=express();\napp.set(\"query parser\", \"extended\");\napp.get(\"/q\", (req, res) => res.json(req.query.filters));"
   },
   {
     "id": "express_query_parser_default_unknown",
@@ -45,10 +65,20 @@
     "split": "dev",
     "label": "unknown",
     "caseRole": "missing_evidence",
-    "sourceSnippet": "const value = wrapper.express_query_parser_default;",
-    "noteFamily": "express-query-parser-default",
-    "missingEvidence": "behavior-relevant value is hidden behind an unresolved wrapper",
-    "command": "npm run test:compat"
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "nested query-string parsing under the default parser",
+    "noteText": "Express 5 uses the simple query parser by default. Code relying on nested query-string objects should be reviewed unless the extended parser is explicitly selected.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "missingEvidence": "behavior-relevant value or configuration is hidden behind an unresolved local wrapper/input",
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_query_parser_default_unknown",
+    "sourceSnippet": "import express from \"express\";\nimport { queryParser } from \"./config.js\";\nconst app=express();\napp.set(\"query parser\", queryParser);\napp.get(\"/q\",(req,res)=>res.json(req.query.filters));"
   },
   {
     "id": "express_query_parser_default_robust_alias",
@@ -56,8 +86,16 @@
     "split": "dev",
     "label": "positive",
     "caseRole": "robustness",
-    "sourceSnippet": "// alias/import variant\nconst filters = req.query.filters;",
-    "noteFamily": "express-query-parser-default",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "nested query-string parsing under the default parser",
+    "noteText": "Express 5 uses the simple query parser by default. Code relying on nested query-string objects should be reviewed unless the extended parser is explicitly selected.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": {
         "status": 200,
@@ -68,7 +106,9 @@
         "body": "{\"a[b]\":\"1\"}"
       }
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_query_parser_default_robust_alias",
+    "sourceSnippet": "import web from \"express\";\nconst app=web();\napp.get(\"/q\", (req, res) => res.json(req.query.filters));"
   },
   {
     "id": "express_query_parser_default_robust_cjs",
@@ -76,8 +116,16 @@
     "split": "dev",
     "label": "positive",
     "caseRole": "robustness",
-    "sourceSnippet": "// CommonJS/literal require variant\nconst filters = req.query.filters;",
-    "noteFamily": "express-query-parser-default",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "nested query-string parsing under the default parser",
+    "noteText": "Express 5 uses the simple query parser by default. Code relying on nested query-string objects should be reviewed unless the extended parser is explicitly selected.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": {
         "status": 200,
@@ -88,7 +136,9 @@
         "body": "{\"a[b]\":\"1\"}"
       }
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_query_parser_default_robust_cjs",
+    "sourceSnippet": "const express=require(\"express\");\nconst app=express();\napp.get(\"/q\", (req, res) => res.json(req.query.filters));"
   },
   {
     "id": "express_query_parser_default_robust_control",
@@ -96,8 +146,16 @@
     "split": "dev",
     "label": "negative",
     "caseRole": "robustness_control",
-    "sourceSnippet": "// stable control variant\nconfigured.set(\"query parser\", \"extended\")",
-    "noteFamily": "express-query-parser-default",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "nested query-string parsing under the default parser",
+    "noteText": "Express 5 uses the simple query parser by default. Code relying on nested query-string objects should be reviewed unless the extended parser is explicitly selected.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": {
         "status": 200,
@@ -108,7 +166,9 @@
         "body": "{\"a\":{\"b\":\"1\"}}"
       }
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_query_parser_default_robust_control",
+    "sourceSnippet": "import web from \"express\";\nconst app=web();\napp.set(\"query parser\", \"extended\");\napp.get(\"/q\", (req, res) => res.json(req.query.filters));"
   },
   {
     "id": "express_wildcard_named_positive",
@@ -116,13 +176,23 @@
     "split": "dev",
     "label": "positive",
     "caseRole": "canonical",
-    "sourceSnippet": "app.get(\"/*\", handler)",
-    "noteFamily": "express-wildcard-named",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "route registration for unnamed versus named wildcards",
+    "noteText": "Express 5 route path syntax requires wildcard parameters to be named; legacy unnamed wildcard strings such as `/*` need review.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": "registered",
       "new": "error:PathError"
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_wildcard_named_positive",
+    "sourceSnippet": "import express from \"express\";\nconst app=express();\napp.get(\"/*\", (_req, res) => res.end(\"ok\"));"
   },
   {
     "id": "express_wildcard_named_negative",
@@ -130,13 +200,23 @@
     "split": "dev",
     "label": "negative",
     "caseRole": "canonical_control",
-    "sourceSnippet": "app.get(\"/health\", handler)",
-    "noteFamily": "express-wildcard-named",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "route registration for unnamed versus named wildcards",
+    "noteText": "Express 5 route path syntax requires wildcard parameters to be named; legacy unnamed wildcard strings such as `/*` need review.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": "registered",
       "new": "registered"
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_wildcard_named_negative",
+    "sourceSnippet": "import express from \"express\";\nconst app=express();\napp.get(\"/*splat\", (_req, res) => res.end(\"ok\"));"
   },
   {
     "id": "express_wildcard_named_unknown",
@@ -144,10 +224,20 @@
     "split": "dev",
     "label": "unknown",
     "caseRole": "missing_evidence",
-    "sourceSnippet": "const value = wrapper.express_wildcard_named;",
-    "noteFamily": "express-wildcard-named",
-    "missingEvidence": "behavior-relevant value is hidden behind an unresolved wrapper",
-    "command": "npm run test:compat"
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "route registration for unnamed versus named wildcards",
+    "noteText": "Express 5 route path syntax requires wildcard parameters to be named; legacy unnamed wildcard strings such as `/*` need review.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "missingEvidence": "behavior-relevant value or configuration is hidden behind an unresolved local wrapper/input",
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_wildcard_named_unknown",
+    "sourceSnippet": "import express from \"express\";\nimport { routePattern } from \"./routes.js\";\nconst app=express();\napp.get(routePattern, (_req,res)=>res.end(\"ok\"));"
   },
   {
     "id": "express_wildcard_named_robust_alias",
@@ -155,13 +245,23 @@
     "split": "dev",
     "label": "positive",
     "caseRole": "robustness",
-    "sourceSnippet": "// alias/import variant\napp.get(\"/*\", handler)",
-    "noteFamily": "express-wildcard-named",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "route registration for unnamed versus named wildcards",
+    "noteText": "Express 5 route path syntax requires wildcard parameters to be named; legacy unnamed wildcard strings such as `/*` need review.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": "registered",
       "new": "error:PathError"
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_wildcard_named_robust_alias",
+    "sourceSnippet": "import web from \"express\";\nconst app=web();\napp.get(\"/*\", (_req, res) => res.end(\"ok\"));"
   },
   {
     "id": "express_wildcard_named_robust_cjs",
@@ -169,13 +269,23 @@
     "split": "dev",
     "label": "positive",
     "caseRole": "robustness",
-    "sourceSnippet": "// CommonJS/literal require variant\napp.get(\"/*\", handler)",
-    "noteFamily": "express-wildcard-named",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "route registration for unnamed versus named wildcards",
+    "noteText": "Express 5 route path syntax requires wildcard parameters to be named; legacy unnamed wildcard strings such as `/*` need review.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": "registered",
       "new": "error:PathError"
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_wildcard_named_robust_cjs",
+    "sourceSnippet": "const express=require(\"express\");\nconst app=express();\napp.get(\"/*\", (_req, res) => res.end(\"ok\"));"
   },
   {
     "id": "express_wildcard_named_robust_control",
@@ -183,13 +293,23 @@
     "split": "dev",
     "label": "negative",
     "caseRole": "robustness_control",
-    "sourceSnippet": "// stable control variant\napp.get(\"/health\", handler)",
-    "noteFamily": "express-wildcard-named",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "route registration for unnamed versus named wildcards",
+    "noteText": "Express 5 route path syntax requires wildcard parameters to be named; legacy unnamed wildcard strings such as `/*` need review.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": "registered",
       "new": "registered"
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_wildcard_named_robust_control",
+    "sourceSnippet": "import web from \"express\";\nconst app=web();\napp.get(\"/*splat\", (_req, res) => res.end(\"ok\"));"
   },
   {
     "id": "express_app_del_removed_positive",
@@ -197,13 +317,23 @@
     "split": "dev",
     "label": "positive",
     "caseRole": "canonical",
-    "sourceSnippet": "app.del(\"/item\", handler)",
-    "noteFamily": "express-app-del-removed",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "availability of the legacy app.del route alias",
+    "noteText": "Express 5 removes the legacy `app.del()` alias; applications should use the normal DELETE route method.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": "function",
       "new": "undefined"
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_app_del_removed_positive",
+    "sourceSnippet": "import express from \"express\";\nconst app=express();\napp.del(\"/item/:id\", (_req, res) => res.sendStatus(204));"
   },
   {
     "id": "express_app_del_removed_negative",
@@ -211,13 +341,23 @@
     "split": "dev",
     "label": "negative",
     "caseRole": "canonical_control",
-    "sourceSnippet": "app.delete(\"/item\", handler)",
-    "noteFamily": "express-app-del-removed",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "availability of the legacy app.del route alias",
+    "noteText": "Express 5 removes the legacy `app.del()` alias; applications should use the normal DELETE route method.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": "function",
       "new": "function"
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_app_del_removed_negative",
+    "sourceSnippet": "import express from \"express\";\nconst app=express();\napp.delete(\"/item/:id\", (_req, res) => res.sendStatus(204));"
   },
   {
     "id": "express_app_del_removed_unknown",
@@ -225,10 +365,20 @@
     "split": "dev",
     "label": "unknown",
     "caseRole": "missing_evidence",
-    "sourceSnippet": "const value = wrapper.express_app_del_removed;",
-    "noteFamily": "express-app-del-removed",
-    "missingEvidence": "behavior-relevant value is hidden behind an unresolved wrapper",
-    "command": "npm run test:compat"
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "availability of the legacy app.del route alias",
+    "noteText": "Express 5 removes the legacy `app.del()` alias; applications should use the normal DELETE route method.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "missingEvidence": "behavior-relevant value or configuration is hidden behind an unresolved local wrapper/input",
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_app_del_removed_unknown",
+    "sourceSnippet": "import express from \"express\";\nimport { registerDelete } from \"./routes.js\";\nconst app=express();\nregisterDelete(app);"
   },
   {
     "id": "express_app_del_removed_robust_alias",
@@ -236,13 +386,23 @@
     "split": "dev",
     "label": "positive",
     "caseRole": "robustness",
-    "sourceSnippet": "// alias/import variant\napp.del(\"/item\", handler)",
-    "noteFamily": "express-app-del-removed",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "availability of the legacy app.del route alias",
+    "noteText": "Express 5 removes the legacy `app.del()` alias; applications should use the normal DELETE route method.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": "function",
       "new": "undefined"
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_app_del_removed_robust_alias",
+    "sourceSnippet": "import web from \"express\";\nconst app=web();\napp.del(\"/item/:id\", (_req, res) => res.sendStatus(204));"
   },
   {
     "id": "express_app_del_removed_robust_cjs",
@@ -250,13 +410,23 @@
     "split": "dev",
     "label": "positive",
     "caseRole": "robustness",
-    "sourceSnippet": "// CommonJS/literal require variant\napp.del(\"/item\", handler)",
-    "noteFamily": "express-app-del-removed",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "availability of the legacy app.del route alias",
+    "noteText": "Express 5 removes the legacy `app.del()` alias; applications should use the normal DELETE route method.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": "function",
       "new": "undefined"
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_app_del_removed_robust_cjs",
+    "sourceSnippet": "const express=require(\"express\");\nconst app=express();\napp.del(\"/item/:id\", (_req, res) => res.sendStatus(204));"
   },
   {
     "id": "express_app_del_removed_robust_control",
@@ -264,13 +434,23 @@
     "split": "dev",
     "label": "negative",
     "caseRole": "robustness_control",
-    "sourceSnippet": "// stable control variant\napp.delete(\"/item\", handler)",
-    "noteFamily": "express-app-del-removed",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "availability of the legacy app.del route alias",
+    "noteText": "Express 5 removes the legacy `app.del()` alias; applications should use the normal DELETE route method.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": "function",
       "new": "function"
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_app_del_removed_robust_control",
+    "sourceSnippet": "import web from \"express\";\nconst app=web();\napp.delete(\"/item/:id\", (_req, res) => res.sendStatus(204));"
   },
   {
     "id": "express_req_param_removed_positive",
@@ -278,8 +458,16 @@
     "split": "dev",
     "label": "positive",
     "caseRole": "canonical",
-    "sourceSnippet": "req.param(\"id\")",
-    "noteFamily": "express-req-param-removed",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "availability of req.param(name) versus explicit parameter sources",
+    "noteText": "Express 5 removes `req.param(name)`; callers must read the intended route, body, or query parameter source explicitly.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": {
         "status": 200,
@@ -290,7 +478,9 @@
         "body": "error:TypeError"
       }
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_req_param_removed_positive",
+    "sourceSnippet": "import express from \"express\";\nconst app=express();\napp.get(\"/u/:id\", (req, res) => res.end(String(req.param(\"id\"))));"
   },
   {
     "id": "express_req_param_removed_negative",
@@ -298,8 +488,16 @@
     "split": "dev",
     "label": "negative",
     "caseRole": "canonical_control",
-    "sourceSnippet": "req.params.id",
-    "noteFamily": "express-req-param-removed",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "availability of req.param(name) versus explicit parameter sources",
+    "noteText": "Express 5 removes `req.param(name)`; callers must read the intended route, body, or query parameter source explicitly.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": {
         "status": 200,
@@ -310,7 +508,9 @@
         "body": "42"
       }
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_req_param_removed_negative",
+    "sourceSnippet": "import express from \"express\";\nconst app=express();\napp.get(\"/u/:id\", (req, res) => res.end(String(req.params.id)));"
   },
   {
     "id": "express_req_param_removed_unknown",
@@ -318,10 +518,20 @@
     "split": "dev",
     "label": "unknown",
     "caseRole": "missing_evidence",
-    "sourceSnippet": "const value = wrapper.express_req_param_removed;",
-    "noteFamily": "express-req-param-removed",
-    "missingEvidence": "behavior-relevant value is hidden behind an unresolved wrapper",
-    "command": "npm run test:compat"
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "availability of req.param(name) versus explicit parameter sources",
+    "noteText": "Express 5 removes `req.param(name)`; callers must read the intended route, body, or query parameter source explicitly.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "missingEvidence": "behavior-relevant value or configuration is hidden behind an unresolved local wrapper/input",
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_req_param_removed_unknown",
+    "sourceSnippet": "import express from \"express\";\nimport { readParameter } from \"./params.js\";\nconst app=express();\napp.get(\"/u/:id\",(req,res)=>res.end(String(readParameter(req,\"id\"))));"
   },
   {
     "id": "express_req_param_removed_robust_alias",
@@ -329,8 +539,16 @@
     "split": "dev",
     "label": "positive",
     "caseRole": "robustness",
-    "sourceSnippet": "// alias/import variant\nreq.param(\"id\")",
-    "noteFamily": "express-req-param-removed",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "availability of req.param(name) versus explicit parameter sources",
+    "noteText": "Express 5 removes `req.param(name)`; callers must read the intended route, body, or query parameter source explicitly.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": {
         "status": 200,
@@ -341,7 +559,9 @@
         "body": "error:TypeError"
       }
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_req_param_removed_robust_alias",
+    "sourceSnippet": "import web from \"express\";\nconst app=web();\napp.get(\"/u/:id\", (req, res) => res.end(String(req.param(\"id\"))));"
   },
   {
     "id": "express_req_param_removed_robust_cjs",
@@ -349,8 +569,16 @@
     "split": "dev",
     "label": "positive",
     "caseRole": "robustness",
-    "sourceSnippet": "// CommonJS/literal require variant\nreq.param(\"id\")",
-    "noteFamily": "express-req-param-removed",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "availability of req.param(name) versus explicit parameter sources",
+    "noteText": "Express 5 removes `req.param(name)`; callers must read the intended route, body, or query parameter source explicitly.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": {
         "status": 200,
@@ -361,7 +589,9 @@
         "body": "error:TypeError"
       }
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_req_param_removed_robust_cjs",
+    "sourceSnippet": "const express=require(\"express\");\nconst app=express();\napp.get(\"/u/:id\", (req, res) => res.end(String(req.param(\"id\"))));"
   },
   {
     "id": "express_req_param_removed_robust_control",
@@ -369,8 +599,16 @@
     "split": "dev",
     "label": "negative",
     "caseRole": "robustness_control",
-    "sourceSnippet": "// stable control variant\nreq.params.id",
-    "noteFamily": "express-req-param-removed",
+    "package": "express",
+    "versions": {
+      "old": "4.21.2",
+      "new": "5.1.0"
+    },
+    "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+    "behavior": "availability of req.param(name) versus explicit parameter sources",
+    "noteText": "Express 5 removes `req.param(name)`; callers must read the intended route, body, or query parameter source explicitly.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": {
         "status": 200,
@@ -381,6 +619,8 @@
         "body": "42"
       }
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/dev/cases/express_req_param_removed_robust_control",
+    "sourceSnippet": "import web from \"express\";\nconst app=web();\napp.get(\"/u/:id\", (req, res) => res.end(String(req.params.id)));"
   }
 ]

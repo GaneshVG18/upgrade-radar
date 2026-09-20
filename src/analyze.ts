@@ -1,7 +1,7 @@
 import path from "node:path";
 import { analyzeUsageSites } from "./adapters/index.js";
 import { validateLocalDependencyFacts } from "./core/dependency.js";
-import { sha256, shortHash } from "./core/util.js";
+import { safeUrl, sha256, shortHash } from "./core/util.js";
 import { parseNotes } from "./notes/parser.js";
 import { workingTreeSnapshot } from "./source/inventory.js";
 import type { Candidate, Finding, NoteDocument, Provider, Report, RunMode, SourceSnapshot, Upgrade } from "./types.js";
@@ -11,6 +11,7 @@ const commonLimitations = [
   "bounded_static_analysis_no_full_program_dataflow_or_call_graph",
   "computed_imports_dynamic_requires_and_unresolved_wrappers_are_not_followed",
   "workspaces_transitive_only_upgrades_and_non_npm_lockfiles_are_out_of_scope",
+  "supplied_notes_are_not_assumed_complete_for_intermediate_releases",
   "selected_source_excerpts_leave_the_machine_in_live_jev_mode_and_secret_redaction_is_imperfect"
 ];
 
@@ -41,6 +42,18 @@ function prepare(options: Omit<AnalyzeOptions, "provider" | "runMode">): Prepare
   const factLimitations = options.skipDependencyValidation ? [] : validateLocalDependencyFacts(options.repo, options.upgrade);
   const snapshot = options.snapshot ?? workingTreeSnapshot(options.repo);
   const usageSites = analyzeUsageSites(snapshot.files, options.upgrade.package);
+  const cleanRevision = /^[0-9a-f]{40}$/i.test(snapshot.revision);
+  if (snapshot.sourceWebBase && cleanRevision) {
+    for (const usage of usageSites) {
+      const fullPath = [snapshot.repositoryPrefix, usage.span.path].filter(Boolean).join("/");
+      const encodedPath = fullPath.split("/").map(encodeURIComponent).join("/");
+      const lineAnchor = usage.span.startLine === usage.span.endLine
+        ? `#L${usage.span.startLine}`
+        : `#L${usage.span.startLine}-L${usage.span.endLine}`;
+      const url = safeUrl(`${snapshot.sourceWebBase}/blob/${snapshot.revision}/${encodedPath}${lineAnchor}`);
+      if (url) usage.span.url = url;
+    }
+  }
   const candidates: Candidate[] = [];
   let capped = false;
   for (const note of notes.blocks) {
@@ -69,10 +82,15 @@ function prepare(options: Omit<AnalyzeOptions, "provider" | "runMode">): Prepare
   if (options.upgrade.package !== "express" && options.upgrade.package !== "zod") {
     limitations.push("generic_library_mode_has_no_express_or_zod_adapter_coverage_claim");
   }
+  if (!cleanRevision) limitations.push("source_line_links_unavailable_for_dirty_worktree");
+  else if (!snapshot.sourceWebBase) limitations.push("source_line_links_unavailable_without_supported_origin_remote");
   return { upgrade: options.upgrade, notes, snapshot, candidates, limitations, hardIncomplete };
 }
 
-function verifyEvidence(candidate: Candidate): void {
+function verifyEvidence(candidate: Candidate, prepared: PreparedAnalysis): void {
+  if (candidate.note.span.sourceHash !== prepared.notes.sha256) throw new Error(`Note source hash changed: ${candidate.note.span.id}`);
+  const source = prepared.snapshot.files.find((file) => file.path === candidate.usage.span.path);
+  if (!source || source.sha256 !== candidate.usage.span.sourceHash) throw new Error(`Code source hash changed: ${candidate.usage.span.id}`);
   if (sha256(candidate.note.span.excerpt) !== candidate.note.span.spanHash) throw new Error(`Note span hash changed: ${candidate.note.span.id}`);
   if (sha256(candidate.usage.span.excerpt) !== candidate.usage.span.spanHash) throw new Error(`Code span hash changed: ${candidate.usage.span.id}`);
 }
@@ -82,7 +100,7 @@ export async function analyzeUpgrade(options: AnalyzeOptions): Promise<{ report:
   const findings: Finding[] = [];
   let providerFailure = false;
   for (const candidate of prepared.candidates) {
-    verifyEvidence(candidate);
+    verifyEvidence(candidate, prepared);
     const relationship = `The supplied ${candidate.upgrade.package} note family '${candidate.note.family}' is linked to resolved package usage '${candidate.usage.symbol}' at ${candidate.usage.span.path}:${candidate.usage.span.startLine}.`;
     try {
       const judgment = await options.provider.judge(candidate);

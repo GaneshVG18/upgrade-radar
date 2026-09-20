@@ -5,15 +5,25 @@
     "split": "holdout",
     "label": "positive",
     "caseRole": "canonical",
-    "sourceSnippet": "z.object({ a: z.string().default(\"x\").optional() })",
-    "noteFamily": "zod-optional-default",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "materialization of defaults inside optional object fields",
+    "noteText": "Zod 4 applies defaults inside optional object fields, so an omitted field can materialize its default value in parsed output.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": {},
       "new": {
         "a": "x"
       }
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_optional_default_positive",
+    "sourceSnippet": "import { z } from \"zod\";\nexport const schema=z.object({a:z.string().default(\"x\").optional()});"
   },
   {
     "id": "zod_optional_default_negative",
@@ -21,8 +31,16 @@
     "split": "holdout",
     "label": "negative",
     "caseRole": "canonical_control",
-    "sourceSnippet": "z.object({ a: z.string().default(\"x\") })",
-    "noteFamily": "zod-optional-default",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "materialization of defaults inside optional object fields",
+    "noteText": "Zod 4 applies defaults inside optional object fields, so an omitted field can materialize its default value in parsed output.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": {
         "a": "x"
@@ -31,7 +49,9 @@
         "a": "x"
       }
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_optional_default_negative",
+    "sourceSnippet": "import { z } from \"zod\";\nexport const schema=z.object({a:z.string().default(\"x\")});"
   },
   {
     "id": "zod_optional_default_unknown",
@@ -39,10 +59,20 @@
     "split": "holdout",
     "label": "unknown",
     "caseRole": "missing_evidence",
-    "sourceSnippet": "const value = wrapper.zod_optional_default;",
-    "noteFamily": "zod-optional-default",
-    "missingEvidence": "behavior-relevant value is hidden behind an unresolved wrapper",
-    "command": "npm run test:compat"
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "materialization of defaults inside optional object fields",
+    "noteText": "Zod 4 applies defaults inside optional object fields, so an omitted field can materialize its default value in parsed output.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "missingEvidence": "behavior-relevant value or configuration is hidden behind an unresolved local wrapper/input",
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_optional_default_unknown",
+    "sourceSnippet": "import { z } from \"zod\";\nimport { optionalWithDefault } from \"./schema-wrapper.js\";\nexport const schema=z.object({a:optionalWithDefault(z.string())});"
   },
   {
     "id": "zod_optional_default_robust_alias",
@@ -50,15 +80,25 @@
     "split": "holdout",
     "label": "positive",
     "caseRole": "robustness",
-    "sourceSnippet": "// alias/import variant\nz.object({ a: z.string().default(\"x\").optional() })",
-    "noteFamily": "zod-optional-default",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "materialization of defaults inside optional object fields",
+    "noteText": "Zod 4 applies defaults inside optional object fields, so an omitted field can materialize its default value in parsed output.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": {},
       "new": {
         "a": "x"
       }
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_optional_default_robust_alias",
+    "sourceSnippet": "import { z as schemaLib } from \"zod\";\nexport const schema=schemaLib.object({a:schemaLib.string().default(\"x\").optional()});"
   },
   {
     "id": "zod_optional_default_robust_cjs",
@@ -66,15 +106,25 @@
     "split": "holdout",
     "label": "positive",
     "caseRole": "robustness",
-    "sourceSnippet": "// CommonJS/literal require variant\nz.object({ a: z.string().default(\"x\").optional() })",
-    "noteFamily": "zod-optional-default",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "materialization of defaults inside optional object fields",
+    "noteText": "Zod 4 applies defaults inside optional object fields, so an omitted field can materialize its default value in parsed output.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": {},
       "new": {
         "a": "x"
       }
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_optional_default_robust_cjs",
+    "sourceSnippet": "const { z }=require(\"zod\");\nexport const schema=z.object({a:z.string().default(\"x\").optional()});"
   },
   {
     "id": "zod_optional_default_robust_control",
@@ -82,8 +132,16 @@
     "split": "holdout",
     "label": "negative",
     "caseRole": "robustness_control",
-    "sourceSnippet": "// stable control variant\nz.object({ a: z.string().default(\"x\") })",
-    "noteFamily": "zod-optional-default",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "materialization of defaults inside optional object fields",
+    "noteText": "Zod 4 applies defaults inside optional object fields, so an omitted field can materialize its default value in parsed output.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": {
         "a": "x"
@@ -92,7 +150,9 @@
         "a": "x"
       }
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_optional_default_robust_control",
+    "sourceSnippet": "import { z as schemaLib } from \"zod\";\nexport const schema=schemaLib.object({a:schemaLib.string().default(\"x\")});"
   },
   {
     "id": "zod_default_short_circuit_positive",
@@ -100,13 +160,23 @@
     "split": "holdout",
     "label": "positive",
     "caseRole": "canonical",
-    "sourceSnippet": "z.string().transform(upper).default(\"x\")",
-    "noteFamily": "zod-default-short-circuit",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "whether a default value passes through an earlier transform",
+    "noteText": "Zod 4 defaults short-circuit parsing for `undefined`, so the default is returned without passing through the earlier transform pipeline.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": "X",
       "new": "x"
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_default_short_circuit_positive",
+    "sourceSnippet": "import { z } from \"zod\";\nexport const schema=z.string().transform(v=>v.toUpperCase()).default(\"x\");\nexport const output=schema.parse(undefined);"
   },
   {
     "id": "zod_default_short_circuit_negative",
@@ -114,13 +184,23 @@
     "split": "holdout",
     "label": "negative",
     "caseRole": "canonical_control",
-    "sourceSnippet": "schema.parse(\"a\")",
-    "noteFamily": "zod-default-short-circuit",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "whether a default value passes through an earlier transform",
+    "noteText": "Zod 4 defaults short-circuit parsing for `undefined`, so the default is returned without passing through the earlier transform pipeline.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": "A",
       "new": "A"
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_default_short_circuit_negative",
+    "sourceSnippet": "import { z } from \"zod\";\nexport const schema=z.string().transform(v=>v.toUpperCase()).default(\"x\");\nexport const output=schema.parse(\"a\");"
   },
   {
     "id": "zod_default_short_circuit_unknown",
@@ -128,10 +208,20 @@
     "split": "holdout",
     "label": "unknown",
     "caseRole": "missing_evidence",
-    "sourceSnippet": "const value = wrapper.zod_default_short_circuit;",
-    "noteFamily": "zod-default-short-circuit",
-    "missingEvidence": "behavior-relevant value is hidden behind an unresolved wrapper",
-    "command": "npm run test:compat"
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "whether a default value passes through an earlier transform",
+    "noteText": "Zod 4 defaults short-circuit parsing for `undefined`, so the default is returned without passing through the earlier transform pipeline.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "missingEvidence": "behavior-relevant value or configuration is hidden behind an unresolved local wrapper/input",
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_default_short_circuit_unknown",
+    "sourceSnippet": "import { z } from \"zod\";\nimport { withDefault } from \"./schema-wrapper.js\";\nexport const schema=withDefault(z.string().transform(v=>v.toUpperCase()));"
   },
   {
     "id": "zod_default_short_circuit_robust_alias",
@@ -139,13 +229,23 @@
     "split": "holdout",
     "label": "positive",
     "caseRole": "robustness",
-    "sourceSnippet": "// alias/import variant\nz.string().transform(upper).default(\"x\")",
-    "noteFamily": "zod-default-short-circuit",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "whether a default value passes through an earlier transform",
+    "noteText": "Zod 4 defaults short-circuit parsing for `undefined`, so the default is returned without passing through the earlier transform pipeline.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": "X",
       "new": "x"
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_default_short_circuit_robust_alias",
+    "sourceSnippet": "import { z as schemaLib } from \"zod\";\nexport const schema=schemaLib.string().transform(v=>v.toUpperCase()).default(\"x\");\nexport const output=schema.parse(undefined);"
   },
   {
     "id": "zod_default_short_circuit_robust_cjs",
@@ -153,13 +253,23 @@
     "split": "holdout",
     "label": "positive",
     "caseRole": "robustness",
-    "sourceSnippet": "// CommonJS/literal require variant\nz.string().transform(upper).default(\"x\")",
-    "noteFamily": "zod-default-short-circuit",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "whether a default value passes through an earlier transform",
+    "noteText": "Zod 4 defaults short-circuit parsing for `undefined`, so the default is returned without passing through the earlier transform pipeline.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": "X",
       "new": "x"
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_default_short_circuit_robust_cjs",
+    "sourceSnippet": "const { z }=require(\"zod\");\nexport const schema=z.string().transform(v=>v.toUpperCase()).default(\"x\");\nexport const output=schema.parse(undefined);"
   },
   {
     "id": "zod_default_short_circuit_robust_control",
@@ -167,13 +277,23 @@
     "split": "holdout",
     "label": "negative",
     "caseRole": "robustness_control",
-    "sourceSnippet": "// stable control variant\nschema.parse(\"a\")",
-    "noteFamily": "zod-default-short-circuit",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "whether a default value passes through an earlier transform",
+    "noteText": "Zod 4 defaults short-circuit parsing for `undefined`, so the default is returned without passing through the earlier transform pipeline.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": "A",
       "new": "A"
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_default_short_circuit_robust_control",
+    "sourceSnippet": "import { z as schemaLib } from \"zod\";\nexport const schema=schemaLib.string().transform(v=>v.toUpperCase()).default(\"x\");\nexport const output=schema.parse(\"a\");"
   },
   {
     "id": "zod_number_infinity_positive",
@@ -181,13 +301,23 @@
     "split": "holdout",
     "label": "positive",
     "caseRole": "canonical",
-    "sourceSnippet": "z.number().safeParse(Infinity)",
-    "noteFamily": "zod-number-infinity",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "acceptance of Infinity by a number schema",
+    "noteText": "Zod 4 number validation rejects infinite values, changing the result for schemas that accepted `Infinity` under Zod 3.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": true,
       "new": false
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_number_infinity_positive",
+    "sourceSnippet": "import { z } from \"zod\";\nconst schema=z.number();\nexport const result=schema.safeParse(Infinity).success;"
   },
   {
     "id": "zod_number_infinity_negative",
@@ -195,13 +325,23 @@
     "split": "holdout",
     "label": "negative",
     "caseRole": "canonical_control",
-    "sourceSnippet": "z.number().safeParse(1)",
-    "noteFamily": "zod-number-infinity",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "acceptance of Infinity by a number schema",
+    "noteText": "Zod 4 number validation rejects infinite values, changing the result for schemas that accepted `Infinity` under Zod 3.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": true,
       "new": true
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_number_infinity_negative",
+    "sourceSnippet": "import { z } from \"zod\";\nconst schema=z.number();\nexport const result=schema.safeParse(1).success;"
   },
   {
     "id": "zod_number_infinity_unknown",
@@ -209,10 +349,20 @@
     "split": "holdout",
     "label": "unknown",
     "caseRole": "missing_evidence",
-    "sourceSnippet": "const value = wrapper.zod_number_infinity;",
-    "noteFamily": "zod-number-infinity",
-    "missingEvidence": "behavior-relevant value is hidden behind an unresolved wrapper",
-    "command": "npm run test:compat"
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "acceptance of Infinity by a number schema",
+    "noteText": "Zod 4 number validation rejects infinite values, changing the result for schemas that accepted `Infinity` under Zod 3.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "missingEvidence": "behavior-relevant value or configuration is hidden behind an unresolved local wrapper/input",
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_number_infinity_unknown",
+    "sourceSnippet": "import { z } from \"zod\";\nimport { runtimeNumber } from \"./input.js\";\nconst schema=z.number();\nexport const result=schema.safeParse(runtimeNumber).success;"
   },
   {
     "id": "zod_number_infinity_robust_alias",
@@ -220,13 +370,23 @@
     "split": "holdout",
     "label": "positive",
     "caseRole": "robustness",
-    "sourceSnippet": "// alias/import variant\nz.number().safeParse(Infinity)",
-    "noteFamily": "zod-number-infinity",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "acceptance of Infinity by a number schema",
+    "noteText": "Zod 4 number validation rejects infinite values, changing the result for schemas that accepted `Infinity` under Zod 3.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": true,
       "new": false
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_number_infinity_robust_alias",
+    "sourceSnippet": "import { z as schemaLib } from \"zod\";\nconst schema=schemaLib.number();\nexport const result=schema.safeParse(Infinity).success;"
   },
   {
     "id": "zod_number_infinity_robust_cjs",
@@ -234,13 +394,23 @@
     "split": "holdout",
     "label": "positive",
     "caseRole": "robustness",
-    "sourceSnippet": "// CommonJS/literal require variant\nz.number().safeParse(Infinity)",
-    "noteFamily": "zod-number-infinity",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "acceptance of Infinity by a number schema",
+    "noteText": "Zod 4 number validation rejects infinite values, changing the result for schemas that accepted `Infinity` under Zod 3.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": true,
       "new": false
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_number_infinity_robust_cjs",
+    "sourceSnippet": "const { z }=require(\"zod\");\nconst schema=z.number();\nexport const result=schema.safeParse(Infinity).success;"
   },
   {
     "id": "zod_number_infinity_robust_control",
@@ -248,13 +418,23 @@
     "split": "holdout",
     "label": "negative",
     "caseRole": "robustness_control",
-    "sourceSnippet": "// stable control variant\nz.number().safeParse(1)",
-    "noteFamily": "zod-number-infinity",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "acceptance of Infinity by a number schema",
+    "noteText": "Zod 4 number validation rejects infinite values, changing the result for schemas that accepted `Infinity` under Zod 3.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": true,
       "new": true
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_number_infinity_robust_control",
+    "sourceSnippet": "import { z as schemaLib } from \"zod\";\nconst schema=schemaLib.number();\nexport const result=schema.safeParse(1).success;"
   },
   {
     "id": "zod_record_one_arg_positive",
@@ -262,13 +442,23 @@
     "split": "holdout",
     "label": "positive",
     "caseRole": "canonical",
-    "sourceSnippet": "z.record(z.string())",
-    "noteFamily": "zod-record-one-arg",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "the one-argument z.record value-schema signature",
+    "noteText": "Zod 4 changes `z.record()` so the former one-argument value-schema form must migrate to the current key/value signature.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": true,
       "new": "error:TypeError"
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_record_one_arg_positive",
+    "sourceSnippet": "import { z } from \"zod\";\nexport const schema=z.record(z.string());"
   },
   {
     "id": "zod_record_one_arg_negative",
@@ -276,13 +466,23 @@
     "split": "holdout",
     "label": "negative",
     "caseRole": "canonical_control",
-    "sourceSnippet": "z.record(z.string(), z.string())",
-    "noteFamily": "zod-record-one-arg",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "the one-argument z.record value-schema signature",
+    "noteText": "Zod 4 changes `z.record()` so the former one-argument value-schema form must migrate to the current key/value signature.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": true,
       "new": true
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_record_one_arg_negative",
+    "sourceSnippet": "import { z } from \"zod\";\nexport const schema=z.record(z.string(), z.string());"
   },
   {
     "id": "zod_record_one_arg_unknown",
@@ -290,10 +490,20 @@
     "split": "holdout",
     "label": "unknown",
     "caseRole": "missing_evidence",
-    "sourceSnippet": "const value = wrapper.zod_record_one_arg;",
-    "noteFamily": "zod-record-one-arg",
-    "missingEvidence": "behavior-relevant value is hidden behind an unresolved wrapper",
-    "command": "npm run test:compat"
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "the one-argument z.record value-schema signature",
+    "noteText": "Zod 4 changes `z.record()` so the former one-argument value-schema form must migrate to the current key/value signature.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
+    "missingEvidence": "behavior-relevant value or configuration is hidden behind an unresolved local wrapper/input",
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_record_one_arg_unknown",
+    "sourceSnippet": "import { z } from \"zod\";\nimport { makeRecord } from \"./schema-wrapper.js\";\nexport const schema=makeRecord(z.string());"
   },
   {
     "id": "zod_record_one_arg_robust_alias",
@@ -301,13 +511,23 @@
     "split": "holdout",
     "label": "positive",
     "caseRole": "robustness",
-    "sourceSnippet": "// alias/import variant\nz.record(z.string())",
-    "noteFamily": "zod-record-one-arg",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "the one-argument z.record value-schema signature",
+    "noteText": "Zod 4 changes `z.record()` so the former one-argument value-schema form must migrate to the current key/value signature.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": true,
       "new": "error:TypeError"
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_record_one_arg_robust_alias",
+    "sourceSnippet": "import { z as schemaLib } from \"zod\";\nexport const schema=schemaLib.record(schemaLib.string());"
   },
   {
     "id": "zod_record_one_arg_robust_cjs",
@@ -315,13 +535,23 @@
     "split": "holdout",
     "label": "positive",
     "caseRole": "robustness",
-    "sourceSnippet": "// CommonJS/literal require variant\nz.record(z.string())",
-    "noteFamily": "zod-record-one-arg",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "the one-argument z.record value-schema signature",
+    "noteText": "Zod 4 changes `z.record()` so the former one-argument value-schema form must migrate to the current key/value signature.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": true,
       "new": "error:TypeError"
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_record_one_arg_robust_cjs",
+    "sourceSnippet": "const { z }=require(\"zod\");\nexport const schema=z.record(z.string());"
   },
   {
     "id": "zod_record_one_arg_robust_control",
@@ -329,12 +559,22 @@
     "split": "holdout",
     "label": "negative",
     "caseRole": "robustness_control",
-    "sourceSnippet": "// stable control variant\nz.record(z.string(), z.string())",
-    "noteFamily": "zod-record-one-arg",
+    "package": "zod",
+    "versions": {
+      "old": "3.25.76",
+      "new": "4.1.5"
+    },
+    "sourceUrl": "https://zod.dev/v4/changelog",
+    "behavior": "the one-argument z.record value-schema signature",
+    "noteText": "Zod 4 changes `z.record()` so the former one-argument value-schema form must migrate to the current key/value signature.",
+    "sourceFile": "source.js",
+    "noteFile": "note.md",
     "expected": {
       "old": true,
       "new": true
     },
-    "command": "npm run test:compat"
+    "command": "npm run test:compat",
+    "fixturePath": "fixtures/holdout/cases/zod_record_one_arg_robust_control",
+    "sourceSnippet": "import { z as schemaLib } from \"zod\";\nexport const schema=schemaLib.record(schemaLib.string(), schemaLib.string());"
   }
 ]

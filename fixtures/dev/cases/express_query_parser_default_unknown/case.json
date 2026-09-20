@@ -1,0 +1,19 @@
+{
+  "id": "express_query_parser_default_unknown",
+  "family": "express-query-parser-default",
+  "split": "dev",
+  "label": "unknown",
+  "caseRole": "missing_evidence",
+  "package": "express",
+  "versions": {
+    "old": "4.21.2",
+    "new": "5.1.0"
+  },
+  "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+  "behavior": "nested query-string parsing under the default parser",
+  "noteText": "Express 5 uses the simple query parser by default. Code relying on nested query-string objects should be reviewed unless the extended parser is explicitly selected.",
+  "sourceFile": "source.js",
+  "noteFile": "note.md",
+  "missingEvidence": "behavior-relevant value or configuration is hidden behind an unresolved local wrapper/input",
+  "command": "npm run test:compat"
+}

@@ -1,0 +1,28 @@
+{
+  "id": "express_req_param_removed_robust_alias",
+  "family": "express-req-param-removed",
+  "split": "dev",
+  "label": "positive",
+  "caseRole": "robustness",
+  "package": "express",
+  "versions": {
+    "old": "4.21.2",
+    "new": "5.1.0"
+  },
+  "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+  "behavior": "availability of req.param(name) versus explicit parameter sources",
+  "noteText": "Express 5 removes `req.param(name)`; callers must read the intended route, body, or query parameter source explicitly.",
+  "sourceFile": "source.js",
+  "noteFile": "note.md",
+  "expected": {
+    "old": {
+      "status": 200,
+      "body": "42"
+    },
+    "new": {
+      "status": 500,
+      "body": "error:TypeError"
+    }
+  },
+  "command": "npm run test:compat"
+}

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { JevProvider } from "../../src/providers/jev.js";
+import { providerPayload } from "../../src/providers/baseline.js";
 import { providerCacheKey } from "../../src/providers/cache.js";
 import { sha256 } from "../../src/core/util.js";
 import type { Candidate } from "../../src/types.js";
@@ -7,7 +8,7 @@ import type { Candidate } from "../../src/types.js";
 const candidate: Candidate = {
   id: "c1",
   upgrade: { package: "express", from: "4.21.2", to: "5.1.0" },
-  note: { family: "express-query-parser-default", text: "default changed", span: { id: "n", kind: "note", path: "n.md", startLine: 1, endLine: 1, sourceHash: "nh", spanHash: sha256("default changed"), excerpt: "default changed" } },
+  note: { family: "express-query-parser-default", heading: "Query parser", text: "default changed", span: { id: "n", kind: "note", path: "n.md", startLine: 1, endLine: 1, sourceHash: "nh", spanHash: sha256("default changed"), excerpt: "default changed" } },
   usage: { package: "express", family: "express-query-parser-default", symbol: "req.query", configuration: {}, missingFacts: [], span: { id: "s", kind: "code", path: "a.ts", startLine: 2, endLine: 2, sourceHash: "sh", spanHash: sha256("req.query"), excerpt: "req.query" } }
 };
 
@@ -29,6 +30,28 @@ describe("Jev host policy", () => {
     expect(first).toBeTruthy();
     expect(providerCacheKey(candidate, undefined)).toBeUndefined();
     expect(providerCacheKey({ ...candidate, usage: { ...candidate.usage, span: { ...candidate.usage.span, sourceHash: "changed" } } }, "jev-1.13.0")).not.toBe(first);
+    expect(providerCacheKey({ ...candidate, note: { ...candidate.note, span: { ...candidate.note.span, spanHash: "changed-note" } } }, "jev-1.13.0")).not.toBe(first);
+    expect(providerCacheKey({ ...candidate, usage: { ...candidate.usage, configuration: { queryParser: "extended" } } }, "jev-1.13.0")).not.toBe(first);
     expect(providerCacheKey(candidate, "jev-1.14.0")).not.toBe(first);
+  });
+
+  it("redacts and bounds provider payload excerpts", () => {
+    const longCandidate = {
+      ...candidate,
+      note: { ...candidate.note, text: `token=supersecretvalue ${"n".repeat(2500)}` },
+      usage: { ...candidate.usage, span: { ...candidate.usage.span, excerpt: `Bearer abcdefghijklmnopqrstuvwxyz ${"s".repeat(2500)}` } }
+    };
+    const payload = providerPayload(longCandidate);
+    expect(payload.state.note).not.toContain("supersecretvalue");
+    expect(payload.state.sourceExcerpt).not.toContain("abcdefghijklmnopqrstuvwxyz");
+    expect(payload.state.note.length).toBeLessThan(1820);
+    expect(payload.state.sourceExcerpt.length).toBeLessThan(1820);
+    expect(payload.state.note).toContain("[truncated]");
+  });
+
+  it.each(["timeout", "429"])("propagates %s provider failures for the host to mark unknown", async (kind) => {
+    const fake = { systemOne: async () => { throw new Error(kind); } };
+    const provider = new JevProvider({ client: fake as never, model: "jev-test" });
+    await expect(provider.judge(candidate)).rejects.toThrow(kind);
   });
 });

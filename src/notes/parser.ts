@@ -56,6 +56,7 @@ export function parseNotes(notePath: string): NoteDocument {
   const lines = text.split(/\r?\n/);
   const blocks: NoteBlock[] = [];
   let currentFamily = "generic";
+  let currentHeading = "Notes";
   let paragraphStart = -1;
   const flush = (endExclusive: number): void => {
     if (paragraphStart < 0) return;
@@ -67,9 +68,10 @@ export function parseNotes(notePath: string): NoteDocument {
     const spanHash = sha256(raw);
     blocks.push({
       family: currentFamily,
+      heading: currentHeading,
       text: raw,
       span: {
-        id: `note-${shortHash(`${notePath}:${startLine}:${endLine}:${spanHash}`)}`,
+        id: `note-${shortHash(`${path.basename(notePath)}:${startLine}:${endLine}:${spanHash}`)}`,
         kind: "note",
         path: path.basename(notePath),
         startLine,
@@ -90,7 +92,13 @@ export function parseNotes(notePath: string): NoteDocument {
       currentFamily = family[1];
       continue;
     }
-    if (/^#{1,6}\s+/.test(line) || line.trim() === "") {
+    const heading = line.match(/^#{1,6}\s+(.+)$/);
+    if (heading?.[1]) {
+      flush(i);
+      currentHeading = heading[1].trim();
+      continue;
+    }
+    if (line.trim() === "") {
       flush(i);
       continue;
     }

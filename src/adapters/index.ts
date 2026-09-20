@@ -154,8 +154,14 @@ function expressSites(file: SourceFile, sf: ts.SourceFile, bindings: Map<string,
   const discover = (node: ts.Node): void => {
     if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer && ts.isCallExpression(node.initializer)) {
       const expr = node.initializer.expression;
-      if (ts.isIdentifier(expr) && bindings.has(expr.text)) appVars.add(node.name.text);
-      if (ts.isPropertyAccessExpression(expr) && expr.name.text === "Router" && rootIdentifier(expr) && bindings.has(rootIdentifier(expr)!)) appVars.add(node.name.text);
+      if (ts.isIdentifier(expr) && bindings.has(expr.text)) {
+        appVars.add(node.name.text);
+        addSite(sites, file, sf, node.initializer, "express", "package-usage", `${expr.text}()`);
+      }
+      if (ts.isPropertyAccessExpression(expr) && expr.name.text === "Router" && rootIdentifier(expr) && bindings.has(rootIdentifier(expr)!)) {
+        appVars.add(node.name.text);
+        addSite(sites, file, sf, node.initializer, "express", "package-usage", `${rootIdentifier(expr)}.Router()`);
+      }
     }
     ts.forEachChild(node, discover);
   };
@@ -213,6 +219,9 @@ function zodSites(file: SourceFile, sf: ts.SourceFile, bindings: Map<string, Bin
       if (root && bindings.has(root)) {
         const method = node.expression.name.text;
         const text = node.getText(sf);
+        if (ts.isIdentifier(node.expression.expression) && node.expression.expression.text === root) {
+          addSite(sites, file, sf, node, "zod", "package-usage", `${root}.${method}`);
+        }
         if (method === "optional" && text.includes(".default(")) {
           addSite(sites, file, sf, node, "zod", "zod-optional-default", `${root}.default().optional()`);
         }

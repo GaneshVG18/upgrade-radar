@@ -1,9 +1,17 @@
 {
   "name": "upgrade-radar",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Evidence-linked dependency upgrade review for TypeScript, powered by Jev",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "bin": {"upgrade-radar": "dist/cli.js"},
   "engines": {"node": ">=24 <25"},
   "scripts": {

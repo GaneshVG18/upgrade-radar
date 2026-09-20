@@ -1,0 +1,19 @@
+{
+  "id": "express_req_param_removed_unknown",
+  "family": "express-req-param-removed",
+  "split": "dev",
+  "label": "unknown",
+  "caseRole": "missing_evidence",
+  "package": "express",
+  "versions": {
+    "old": "4.21.2",
+    "new": "5.1.0"
+  },
+  "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+  "behavior": "availability of req.param(name) versus explicit parameter sources",
+  "noteText": "Express 5 removes `req.param(name)`; callers must read the intended route, body, or query parameter source explicitly.",
+  "sourceFile": "source.js",
+  "noteFile": "note.md",
+  "missingEvidence": "behavior-relevant value or configuration is hidden behind an unresolved local wrapper/input",
+  "command": "npm run test:compat"
+}

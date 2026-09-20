@@ -1,0 +1,22 @@
+{
+  "id": "express_wildcard_named_robust_control",
+  "family": "express-wildcard-named",
+  "split": "dev",
+  "label": "negative",
+  "caseRole": "robustness_control",
+  "package": "express",
+  "versions": {
+    "old": "4.21.2",
+    "new": "5.1.0"
+  },
+  "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+  "behavior": "route registration for unnamed versus named wildcards",
+  "noteText": "Express 5 route path syntax requires wildcard parameters to be named; legacy unnamed wildcard strings such as `/*` need review.",
+  "sourceFile": "source.js",
+  "noteFile": "note.md",
+  "expected": {
+    "old": "registered",
+    "new": "registered"
+  },
+  "command": "npm run test:compat"
+}

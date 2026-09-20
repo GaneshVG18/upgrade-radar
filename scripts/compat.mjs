@@ -33,7 +33,7 @@ async function expressQuery(express, variant) {
 function expressWildcard(express, variant) {
   const app = express();
   try {
-    app.get(variant === "positive" ? "/*" : "/health", (_req, res) => res.end("ok"));
+    app.get(variant === "positive" ? "/*" : "/*splat", (_req, res) => res.end("ok"));
     return "registered";
   } catch (error) {
     return `error:${error.constructor.name}`;

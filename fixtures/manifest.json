@@ -1,0 +1,726 @@
+{
+  "schemaVersion": "upgrade-radar-fixtures/v1",
+  "generated": "2026-09-20",
+  "cases": [
+    {
+      "id": "express_query_parser_default_positive",
+      "fixturePath": "fixtures/dev/cases/express_query_parser_default_positive",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "a0c1ac0974a0ab6d6f4cd9c14a2930326ea73dccd1526f949e204a3c17e98dea",
+        "note": "6c0ba1495ae1c8dfbcd084aa944cf82a955949ff5f6ea526b53d22795730abbf",
+        "metadata": "859899a9b344364deb2ceb2e79dd5bdaae7a1172538f3cdc93d05113537a4828"
+      }
+    },
+    {
+      "id": "express_query_parser_default_negative",
+      "fixturePath": "fixtures/dev/cases/express_query_parser_default_negative",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "812ecd2c6f208c1f4cab0a52b05b0c8ca0216e013575ef26ce6fcfe5cb8e112e",
+        "note": "6c0ba1495ae1c8dfbcd084aa944cf82a955949ff5f6ea526b53d22795730abbf",
+        "metadata": "129851a6af0adedb983dcc19ac6feb12c36b048e263f05ba559c9699cbb581a5"
+      }
+    },
+    {
+      "id": "express_query_parser_default_unknown",
+      "fixturePath": "fixtures/dev/cases/express_query_parser_default_unknown",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "105d03003953d43a4bf1ee2bd0e840cfaed6ab21d5a3c874f1c78433777cea11",
+        "note": "6c0ba1495ae1c8dfbcd084aa944cf82a955949ff5f6ea526b53d22795730abbf",
+        "metadata": "e1e9fb17bec21a4250ba8e16b7a60697e7c38feb0da7bfdd4412e1016a5b0984"
+      }
+    },
+    {
+      "id": "express_query_parser_default_robust_alias",
+      "fixturePath": "fixtures/dev/cases/express_query_parser_default_robust_alias",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "b433b6c38da70d18c5cb290456a0f6603b590ff224c6329f7f238e1dd5ba78f5",
+        "note": "6c0ba1495ae1c8dfbcd084aa944cf82a955949ff5f6ea526b53d22795730abbf",
+        "metadata": "0fed4a1947d8e201a76694eefd83845d4e8e9595eaece923f1e7eb0ef60388ca"
+      }
+    },
+    {
+      "id": "express_query_parser_default_robust_cjs",
+      "fixturePath": "fixtures/dev/cases/express_query_parser_default_robust_cjs",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "cfe6872b6535a992354f8eca0a66a566690b3e8f223d99a97f2bbd4da4dd6ece",
+        "note": "6c0ba1495ae1c8dfbcd084aa944cf82a955949ff5f6ea526b53d22795730abbf",
+        "metadata": "95cfe2270a7f7e6b7817e37a7f6efb9f19f84a5bd9c126d7da4affea73741211"
+      }
+    },
+    {
+      "id": "express_query_parser_default_robust_control",
+      "fixturePath": "fixtures/dev/cases/express_query_parser_default_robust_control",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "636f74993fabaa152534409de18ea567c668a011fa3f3c171e7f8800200fda97",
+        "note": "6c0ba1495ae1c8dfbcd084aa944cf82a955949ff5f6ea526b53d22795730abbf",
+        "metadata": "319596611dd513ad04af532f8c80cb11b5b58fc6993918148f647c788fc231d7"
+      }
+    },
+    {
+      "id": "express_wildcard_named_positive",
+      "fixturePath": "fixtures/dev/cases/express_wildcard_named_positive",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "92a3536b013414c08ee1af66c27aeac14f7fde4865869f3574dc78698fa367cb",
+        "note": "fb958af63122955f8ab0d5e4a5807e380647e85e9afd3f201594c1ba39dec651",
+        "metadata": "bf58af5b9ae83a6005eec195e5b041b36e88db30b66e61d4fc65a652611b8796"
+      }
+    },
+    {
+      "id": "express_wildcard_named_negative",
+      "fixturePath": "fixtures/dev/cases/express_wildcard_named_negative",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "c5c8c9e2982efeca5de7dd2e8e35d21eafcbcb54b2d6cecccbd46b8893b5d3c1",
+        "note": "fb958af63122955f8ab0d5e4a5807e380647e85e9afd3f201594c1ba39dec651",
+        "metadata": "ca4acfbcff3078dc97a2cd8d7e43928a34037154ea4920c9925f4ec1e850fecf"
+      }
+    },
+    {
+      "id": "express_wildcard_named_unknown",
+      "fixturePath": "fixtures/dev/cases/express_wildcard_named_unknown",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "ce8835997f8ec7fb0ffa24a9a79eed2c059915e860007940d0e5b71caf5aa434",
+        "note": "fb958af63122955f8ab0d5e4a5807e380647e85e9afd3f201594c1ba39dec651",
+        "metadata": "08ba493e6aceb2a9be99afb46ee6bb01f58388fc66a1bfa78c0f3ea9825d7bce"
+      }
+    },
+    {
+      "id": "express_wildcard_named_robust_alias",
+      "fixturePath": "fixtures/dev/cases/express_wildcard_named_robust_alias",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "eaaedf709234c646e13b94ff08a592153ccaafa9e3065f2ae9ef1cd9bee3f015",
+        "note": "fb958af63122955f8ab0d5e4a5807e380647e85e9afd3f201594c1ba39dec651",
+        "metadata": "0c0fa9c19aebc340cf27d542efabf9297aa7dd1e3d703828f4b31bd8566793e5"
+      }
+    },
+    {
+      "id": "express_wildcard_named_robust_cjs",
+      "fixturePath": "fixtures/dev/cases/express_wildcard_named_robust_cjs",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "ce40cbc256de12cbf314735139ce1eb612c86e43a65db12109607183d78dd18f",
+        "note": "fb958af63122955f8ab0d5e4a5807e380647e85e9afd3f201594c1ba39dec651",
+        "metadata": "c6460bd6d8502a3fddbe8968e965c721d7f29395aa5e88573fc3099392d97991"
+      }
+    },
+    {
+      "id": "express_wildcard_named_robust_control",
+      "fixturePath": "fixtures/dev/cases/express_wildcard_named_robust_control",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "52f7877aa04b04d3fef5f89561b754ff143b4d78ab3ff00f184de3e1d03f5e76",
+        "note": "fb958af63122955f8ab0d5e4a5807e380647e85e9afd3f201594c1ba39dec651",
+        "metadata": "4e4114bf644c585d74e3c7b58dd3046fefcd838819050d811ea024ab347c9d9d"
+      }
+    },
+    {
+      "id": "express_app_del_removed_positive",
+      "fixturePath": "fixtures/dev/cases/express_app_del_removed_positive",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "ac946affa4379efd411d1efe14cd2d9e8e64e8e1912f4ae7d245033bc5407f88",
+        "note": "e28b1d697d8b2146e62332b26566adeed7074ecdb01ebb39907f6176f78ceca8",
+        "metadata": "6d04e95c6bb498751f31c0ad54e7e15f3eec095e5e762a6dcbb0e844048e3a27"
+      }
+    },
+    {
+      "id": "express_app_del_removed_negative",
+      "fixturePath": "fixtures/dev/cases/express_app_del_removed_negative",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "025bca33d46ee467ac761436308526c110efc81d0f4bf8de29457afab996a4df",
+        "note": "e28b1d697d8b2146e62332b26566adeed7074ecdb01ebb39907f6176f78ceca8",
+        "metadata": "4a97df46273382a393a3fabe8a59be7299a15ef44eac8a64703959dad4cdcfd8"
+      }
+    },
+    {
+      "id": "express_app_del_removed_unknown",
+      "fixturePath": "fixtures/dev/cases/express_app_del_removed_unknown",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "45be2ed9828e1adaf1858bd595b6bebdb3766fbf822c3ec01edc13011cfd8905",
+        "note": "e28b1d697d8b2146e62332b26566adeed7074ecdb01ebb39907f6176f78ceca8",
+        "metadata": "f0aeab90dc6ed6b24987acc56f14788b0fb500012ba73f44360ffdbbf03165d3"
+      }
+    },
+    {
+      "id": "express_app_del_removed_robust_alias",
+      "fixturePath": "fixtures/dev/cases/express_app_del_removed_robust_alias",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "404dcef5adf2d54b9917dee27556e28034c67e4837bb6de6dafbfae26a2b310b",
+        "note": "e28b1d697d8b2146e62332b26566adeed7074ecdb01ebb39907f6176f78ceca8",
+        "metadata": "7bbd31f0e4b5c35320e8e55048a8356f8e62697dc4f91ba541955b8e69410529"
+      }
+    },
+    {
+      "id": "express_app_del_removed_robust_cjs",
+      "fixturePath": "fixtures/dev/cases/express_app_del_removed_robust_cjs",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "1a98f32532a8c6717ad98561e171f1605e6b1718f81a438cebe4e925ad0dca3a",
+        "note": "e28b1d697d8b2146e62332b26566adeed7074ecdb01ebb39907f6176f78ceca8",
+        "metadata": "692deef8c02fa638c9845ff83f482f2383e5fdd38f5adbd69ae591b3ec6c0522"
+      }
+    },
+    {
+      "id": "express_app_del_removed_robust_control",
+      "fixturePath": "fixtures/dev/cases/express_app_del_removed_robust_control",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "67c59ccb49fdb77167b59e17a6575e03b78665ce626021bb1d469a6857b8f7d8",
+        "note": "e28b1d697d8b2146e62332b26566adeed7074ecdb01ebb39907f6176f78ceca8",
+        "metadata": "efbb6e62a3f79a436528e781a5eb2a0d42c9f3fd4f273695ecea08cb4a667dd1"
+      }
+    },
+    {
+      "id": "express_req_param_removed_positive",
+      "fixturePath": "fixtures/dev/cases/express_req_param_removed_positive",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "cf99ccf3d818e412c1d1ac3c399796cb5f3ed67a2a36e5e47896a138ce2ac00f",
+        "note": "20cc8e54702515f1486c3fbe87d348dd6ddb88c6513dd1796898ec4c9a78ed67",
+        "metadata": "88654af8535230d79e9033e6398f7abe3cb8bdb2c9843f1eeacc95955fcc72bc"
+      }
+    },
+    {
+      "id": "express_req_param_removed_negative",
+      "fixturePath": "fixtures/dev/cases/express_req_param_removed_negative",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "25cfbf174ddfa1016847a00f3dad5b7b0fe0ba1a8e17dc048cf99a2b1763c00f",
+        "note": "20cc8e54702515f1486c3fbe87d348dd6ddb88c6513dd1796898ec4c9a78ed67",
+        "metadata": "ae390d2d9b1b7e7af29621c7b8cf9645a542dfdf9eba3a7095f668a374b43248"
+      }
+    },
+    {
+      "id": "express_req_param_removed_unknown",
+      "fixturePath": "fixtures/dev/cases/express_req_param_removed_unknown",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "8db7c325431bf6b006ad7caae1316af8fb5e3dd62199586ce0967200776a5e06",
+        "note": "20cc8e54702515f1486c3fbe87d348dd6ddb88c6513dd1796898ec4c9a78ed67",
+        "metadata": "d25e4c344f17a6f39aef0533c9ccd967884de7463f510259c86e43a8009b964a"
+      }
+    },
+    {
+      "id": "express_req_param_removed_robust_alias",
+      "fixturePath": "fixtures/dev/cases/express_req_param_removed_robust_alias",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "e7d11dd31a249f2e7003be8ec595b4f000373dd67274cc3624c8801628e474f0",
+        "note": "20cc8e54702515f1486c3fbe87d348dd6ddb88c6513dd1796898ec4c9a78ed67",
+        "metadata": "fa42abf8d1969974c70a9335c8dff8bac8ee8a6c682a2aad3291aefda1ec4264"
+      }
+    },
+    {
+      "id": "express_req_param_removed_robust_cjs",
+      "fixturePath": "fixtures/dev/cases/express_req_param_removed_robust_cjs",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "1e935404e8be14009780f93a27a908149588fb300e637c9a9aa54655cccdb99d",
+        "note": "20cc8e54702515f1486c3fbe87d348dd6ddb88c6513dd1796898ec4c9a78ed67",
+        "metadata": "dc86c24ef23787415a3e1dc383d1123a433f7f218254cad5e92e68287f758760"
+      }
+    },
+    {
+      "id": "express_req_param_removed_robust_control",
+      "fixturePath": "fixtures/dev/cases/express_req_param_removed_robust_control",
+      "package": "express",
+      "versions": {
+        "old": "4.21.2",
+        "new": "5.1.0"
+      },
+      "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+      "hashes": {
+        "source": "1689f7434ef435c3c7cb8137ca4c83556630d8b7e9f2a8791ebec9a2ec311b2a",
+        "note": "20cc8e54702515f1486c3fbe87d348dd6ddb88c6513dd1796898ec4c9a78ed67",
+        "metadata": "e83cb82c65f763964bf345872b93ba1943caa209597f0340181fe36c91d13e87"
+      }
+    },
+    {
+      "id": "zod_optional_default_positive",
+      "fixturePath": "fixtures/holdout/cases/zod_optional_default_positive",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "0beb8fff149d2134585ce6ec5f8eaebbfad836f919f4979421d738faf84d7b81",
+        "note": "3d1be3558febb227734fd09d7ad0bf539dc91c2827db0745b57be8ca77e58922",
+        "metadata": "ec8a4a070dbcd1c5f9905c7405f3895e3c543819671c1abf19d6f7cd689cced2"
+      }
+    },
+    {
+      "id": "zod_optional_default_negative",
+      "fixturePath": "fixtures/holdout/cases/zod_optional_default_negative",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "d066d99cf4bf3cb808c242ec3332d74858d065453f5d35af4bdb53d1717bc797",
+        "note": "3d1be3558febb227734fd09d7ad0bf539dc91c2827db0745b57be8ca77e58922",
+        "metadata": "1f324fedc1bbb87e58bd0cab480a483af878b69fc34e069765446256fe99bc42"
+      }
+    },
+    {
+      "id": "zod_optional_default_unknown",
+      "fixturePath": "fixtures/holdout/cases/zod_optional_default_unknown",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "be7619254fd987b930b6839b2c2feb1bac62817b60f0da09dc46e1bba510d885",
+        "note": "3d1be3558febb227734fd09d7ad0bf539dc91c2827db0745b57be8ca77e58922",
+        "metadata": "970085c846342365041c86947ad4b99699bc9eed411d1cef3a42671fe4177fef"
+      }
+    },
+    {
+      "id": "zod_optional_default_robust_alias",
+      "fixturePath": "fixtures/holdout/cases/zod_optional_default_robust_alias",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "350fa64b4758bffa70b644b0cc8747a50b9a94f9481d6787b22eb73038b51c08",
+        "note": "3d1be3558febb227734fd09d7ad0bf539dc91c2827db0745b57be8ca77e58922",
+        "metadata": "cc24b03ecab3c38950929e5fe72c9332dc18a840a11ed24930c1aa88e53b6b92"
+      }
+    },
+    {
+      "id": "zod_optional_default_robust_cjs",
+      "fixturePath": "fixtures/holdout/cases/zod_optional_default_robust_cjs",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "2d5cb5ffd2deea82da4223a723f7d9000466faa00f4fe12165303978a0aab81c",
+        "note": "3d1be3558febb227734fd09d7ad0bf539dc91c2827db0745b57be8ca77e58922",
+        "metadata": "8e47863f3a1ed3eac9a4e78ca64ad964d8d7c563c058efecb555fd156ff5059d"
+      }
+    },
+    {
+      "id": "zod_optional_default_robust_control",
+      "fixturePath": "fixtures/holdout/cases/zod_optional_default_robust_control",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "811831afa64430718519d022c08c831d43a4031acb8d9c2d297718cbe38b4509",
+        "note": "3d1be3558febb227734fd09d7ad0bf539dc91c2827db0745b57be8ca77e58922",
+        "metadata": "071ac569da9e90d5c62e8be501c95f2b1afcd4db99378da4b75f1394d91b4cc9"
+      }
+    },
+    {
+      "id": "zod_default_short_circuit_positive",
+      "fixturePath": "fixtures/holdout/cases/zod_default_short_circuit_positive",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "bc118a2a92b2457c6d0ac10becc0c57dc00554af0c18fced2bd4b1e2f0a0f526",
+        "note": "2e81888a21c0a3bcf2e203651d4b6bd98703a2a8214488cd25a19aa0726fe04c",
+        "metadata": "2bad7f6234194edc13c3399f4a67c8ae67765a188a38e3f6a847b3bf02d600dc"
+      }
+    },
+    {
+      "id": "zod_default_short_circuit_negative",
+      "fixturePath": "fixtures/holdout/cases/zod_default_short_circuit_negative",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "1d9cf26a1729fe1b7531e7de591c3c9ea03d02490cea73ae10a649c9986fb048",
+        "note": "2e81888a21c0a3bcf2e203651d4b6bd98703a2a8214488cd25a19aa0726fe04c",
+        "metadata": "1de1f5a39129403ff5b79af8c5e9823245e509afb08ac97415ecee0a27a60c8c"
+      }
+    },
+    {
+      "id": "zod_default_short_circuit_unknown",
+      "fixturePath": "fixtures/holdout/cases/zod_default_short_circuit_unknown",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "9df3988491cb91e82651c410fd66340c8dc42c0f696f41f538bdd4f6b1793d1a",
+        "note": "2e81888a21c0a3bcf2e203651d4b6bd98703a2a8214488cd25a19aa0726fe04c",
+        "metadata": "8318b3e050cc4e95724bc5a5eb3124aff0da31e8126b180e72ad3cae737d0f16"
+      }
+    },
+    {
+      "id": "zod_default_short_circuit_robust_alias",
+      "fixturePath": "fixtures/holdout/cases/zod_default_short_circuit_robust_alias",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "8fd7d68e84834cb922b80768119e24401ef096db6759ba3a2d80fe9908112491",
+        "note": "2e81888a21c0a3bcf2e203651d4b6bd98703a2a8214488cd25a19aa0726fe04c",
+        "metadata": "219bab2a0c95288cdef94dd04b82fdf9ba32a51461435ccbaa43fd0d086efa48"
+      }
+    },
+    {
+      "id": "zod_default_short_circuit_robust_cjs",
+      "fixturePath": "fixtures/holdout/cases/zod_default_short_circuit_robust_cjs",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "2df83301fb6c4cce1aea02789d5239adfab8dc866a7678663637e69c3544ed23",
+        "note": "2e81888a21c0a3bcf2e203651d4b6bd98703a2a8214488cd25a19aa0726fe04c",
+        "metadata": "bc9a98595187e4297f3f33d0e74b7c5623c52accf7d6c93eadbcef4e0bc3b663"
+      }
+    },
+    {
+      "id": "zod_default_short_circuit_robust_control",
+      "fixturePath": "fixtures/holdout/cases/zod_default_short_circuit_robust_control",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "01c7b54ea3606e6a738c65495b48e5ece2fb9cd14112d449256533acd5fbc750",
+        "note": "2e81888a21c0a3bcf2e203651d4b6bd98703a2a8214488cd25a19aa0726fe04c",
+        "metadata": "0344d2c9ad92802785d8b835047c653ff76d9f7b7d50ad90bd42c53684fdcf09"
+      }
+    },
+    {
+      "id": "zod_number_infinity_positive",
+      "fixturePath": "fixtures/holdout/cases/zod_number_infinity_positive",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "de2de85f7fa945132d2faea7ea04a212b2f93f7af4f086e5ae883ce6a518524a",
+        "note": "1b91ec88802899d82844191ded36459f3452d2bcf7bada90e9edd510082f014a",
+        "metadata": "24e9cbf4357d9eb0a1430763eb5e7aa972306e5d5e3395eb462f5f1c91cbe7be"
+      }
+    },
+    {
+      "id": "zod_number_infinity_negative",
+      "fixturePath": "fixtures/holdout/cases/zod_number_infinity_negative",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "3d09a05845af14a4d25e38d8582960c78ad38f599df9720e82a4b462aefe0e8d",
+        "note": "1b91ec88802899d82844191ded36459f3452d2bcf7bada90e9edd510082f014a",
+        "metadata": "c014505a371554934ede718bfd168bb0c5d2a103c9c53418ada08db09e590571"
+      }
+    },
+    {
+      "id": "zod_number_infinity_unknown",
+      "fixturePath": "fixtures/holdout/cases/zod_number_infinity_unknown",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "543808d1a452ef26ee8fa92fe81792a7dd65ef0e90e10cc2d9322ae6a3a4f5f2",
+        "note": "1b91ec88802899d82844191ded36459f3452d2bcf7bada90e9edd510082f014a",
+        "metadata": "6d73858ae0c1031020dd7d200c0b3ce04c7e524261fb5469b1f911b8936ecda8"
+      }
+    },
+    {
+      "id": "zod_number_infinity_robust_alias",
+      "fixturePath": "fixtures/holdout/cases/zod_number_infinity_robust_alias",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "ee81bc315142a43dad43b26aceeae0400bcaea89d63b3acd2ce4c1c22d6a52c5",
+        "note": "1b91ec88802899d82844191ded36459f3452d2bcf7bada90e9edd510082f014a",
+        "metadata": "0a20e61e52572e7dd5c9e516cc0372fd008ca75d9320979a59ee282823af6e83"
+      }
+    },
+    {
+      "id": "zod_number_infinity_robust_cjs",
+      "fixturePath": "fixtures/holdout/cases/zod_number_infinity_robust_cjs",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "83551ad1e4e2afa859e0f2c5bd3eadee12a62c8f39a7074b8001014b384757b2",
+        "note": "1b91ec88802899d82844191ded36459f3452d2bcf7bada90e9edd510082f014a",
+        "metadata": "145c383f20006b852c6c6818b445abdc96a65fe42d0ba6429a5356f124e6c6b1"
+      }
+    },
+    {
+      "id": "zod_number_infinity_robust_control",
+      "fixturePath": "fixtures/holdout/cases/zod_number_infinity_robust_control",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "12e5d061de8e934a01c03faf90aaaf2f206811727b4c90f0ec4bf429ded44f09",
+        "note": "1b91ec88802899d82844191ded36459f3452d2bcf7bada90e9edd510082f014a",
+        "metadata": "327a2dc3a4cfa48b9d9d3f23b4206e6fe53eab32ce35e63b5a55f4441474332c"
+      }
+    },
+    {
+      "id": "zod_record_one_arg_positive",
+      "fixturePath": "fixtures/holdout/cases/zod_record_one_arg_positive",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "16d5df31110eab9f7b185178d06bf05e769234330209da9525a5ba92733e1e76",
+        "note": "3244cd6187204eb1150f4fc24fee18a15173b3f33a2c1a8e7748a02b13426cf9",
+        "metadata": "7b81eb7bbdec9891aa8128e2db3a873e168d7922708a6b61da5b2dde21fc4045"
+      }
+    },
+    {
+      "id": "zod_record_one_arg_negative",
+      "fixturePath": "fixtures/holdout/cases/zod_record_one_arg_negative",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "fa182a2e174e263780c734d7dce7405383ffcbd81577f21585c8daa62e150c02",
+        "note": "3244cd6187204eb1150f4fc24fee18a15173b3f33a2c1a8e7748a02b13426cf9",
+        "metadata": "0be3140bd26461775a41c8a09af24953e63224bbb1dfd98cb993b3825b809c9f"
+      }
+    },
+    {
+      "id": "zod_record_one_arg_unknown",
+      "fixturePath": "fixtures/holdout/cases/zod_record_one_arg_unknown",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "02e426ba4e88203727a1102aaf9d59d1b406cef247a3d4c01e634082c05d6608",
+        "note": "3244cd6187204eb1150f4fc24fee18a15173b3f33a2c1a8e7748a02b13426cf9",
+        "metadata": "7d8d8ec79e7c51e644fe3e197a31714aeb0ca7739e04f801b576bde5d7f55b65"
+      }
+    },
+    {
+      "id": "zod_record_one_arg_robust_alias",
+      "fixturePath": "fixtures/holdout/cases/zod_record_one_arg_robust_alias",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "ae1b5d1f94ec3df6421c7f7daf1f38d13d3a7018c52cef1ecda1915c0d0d5a6b",
+        "note": "3244cd6187204eb1150f4fc24fee18a15173b3f33a2c1a8e7748a02b13426cf9",
+        "metadata": "a3123398f2d67b11d4692875829ece4c3113d130b1d7532416f77ee989c1cdaa"
+      }
+    },
+    {
+      "id": "zod_record_one_arg_robust_cjs",
+      "fixturePath": "fixtures/holdout/cases/zod_record_one_arg_robust_cjs",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "dd7e0b7812d04a2e2d817322a0e051ebefa9dc936000cf8df030601965a0780a",
+        "note": "3244cd6187204eb1150f4fc24fee18a15173b3f33a2c1a8e7748a02b13426cf9",
+        "metadata": "b7bd2b6f3e2591179f74cb2707f23db2a6fa0b1d4f9ed1dd7cb1dbb1eac9646b"
+      }
+    },
+    {
+      "id": "zod_record_one_arg_robust_control",
+      "fixturePath": "fixtures/holdout/cases/zod_record_one_arg_robust_control",
+      "package": "zod",
+      "versions": {
+        "old": "3.25.76",
+        "new": "4.1.5"
+      },
+      "sourceUrl": "https://zod.dev/v4/changelog",
+      "hashes": {
+        "source": "495f696872fff0be7709bdda81aa5d1c2fcf4b715d567a11d2217bc3c246f549",
+        "note": "3244cd6187204eb1150f4fc24fee18a15173b3f33a2c1a8e7748a02b13426cf9",
+        "metadata": "3fde88c1e31c37774ebb15fc18e9ff112d4ad6942f89d7e8a5ef0681b62cbb4c"
+      }
+    }
+  ]
+}

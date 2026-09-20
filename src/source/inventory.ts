@@ -21,7 +21,31 @@ function allowedPath(rel: string): boolean {
   return supported.has(path.extname(rel).toLowerCase());
 }
 
-function buildSnapshot(repoPath: string, revision: string, rows: Array<{ path: string; read: () => Buffer }>): SourceSnapshot {
+function remoteWebBase(root: string): string | undefined {
+  let remote: string;
+  try {
+    remote = git(root, ["remote", "get-url", "origin"]).trim();
+  } catch {
+    return undefined;
+  }
+  if (/^git@[^:]+:.+/.test(remote)) {
+    const match = remote.match(/^git@([^:]+):(.+)$/);
+    if (!match?.[1] || !match[2]) return undefined;
+    remote = `https://${match[1]}/${match[2]}`;
+  } else if (/^ssh:\/\/git@[^/]+\/.+/.test(remote)) {
+    remote = remote.replace(/^ssh:\/\/git@([^/]+)\//, "https://$1/");
+  }
+  if (!/^https?:\/\//.test(remote)) return undefined;
+  return remote.replace(/\.git$/, "").replace(/\/$/, "");
+}
+
+function buildSnapshot(
+  repoPath: string,
+  revision: string,
+  repositoryPrefix: string,
+  rows: Array<{ path: string; read: () => Buffer }>,
+  sourceWebBase?: string
+): SourceSnapshot {
   const files: SourceFile[] = [];
   const limitations: string[] = [];
   let skippedCount = 0;
@@ -47,6 +71,8 @@ function buildSnapshot(repoPath: string, revision: string, rows: Array<{ path: s
   return {
     repoPath,
     revision,
+    repositoryPrefix,
+    ...(sourceWebBase ? { sourceWebBase } : {}),
     files,
     scannedCount: files.length,
     skippedCount,
@@ -75,7 +101,7 @@ export function workingTreeSnapshot(repo: string): SourceSnapshot {
       }
     };
   });
-  return buildSnapshot(repoAbs, revision, rows);
+  return buildSnapshot(repoAbs, revision, prefix, rows, remoteWebBase(root));
 }
 
 export function gitObjectSnapshot(repo: string, revisionInput: string): SourceSnapshot {
@@ -89,7 +115,7 @@ export function gitObjectSnapshot(repo: string, revisionInput: string): SourceSn
     path: prefix ? path.posix.relative(prefix, rootRel) : rootRel,
     read: () => Buffer.from(execFileSync("git", ["-C", root, "show", `${revision}:${rootRel}`], { maxBuffer: 32 * 1024 * 1024 }))
   }));
-  return buildSnapshot(repoAbs, revision, rows);
+  return buildSnapshot(repoAbs, revision, prefix, rows, remoteWebBase(root));
 }
 
 export function gitTextAt(repo: string, revisionInput: string, file: string): string {

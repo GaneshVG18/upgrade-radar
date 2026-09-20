@@ -10,6 +10,7 @@ export function providerPayload(candidate: Candidate): ProviderPayload {
       from: candidate.upgrade.from,
       to: candidate.upgrade.to,
       note,
+      noteContext: candidate.note.heading,
       noteFamily: candidate.note.family,
       sourceExcerpt,
       resolvedSymbol: candidate.usage.symbol,

@@ -34,4 +34,22 @@ describe("source identity and supported syntax", () => {
     const sites = analyzeUsageSites([file("dynamic.ts", 'const p="express"; const web=await import(p);')], "express");
     expect(sites).toEqual([]);
   });
+
+  it("does not treat comments or string literals as package usage", () => {
+    const sites = analyzeUsageSites([file("text.ts", '// import express from "express"\nconst example="req.query";')], "express");
+    expect(sites).toEqual([]);
+  });
+
+  it("retains bounded package-level usage for generic/default notes", () => {
+    const expressSites = analyzeUsageSites([file("health.ts", 'import express from "express";\nconst app=express();\napp.get("/health",(_req,res)=>res.send("ok"));')], "express");
+    expect(expressSites.some((site) => site.family === "package-usage")).toBe(true);
+    const zodSites = analyzeUsageSites([file("schema.ts", 'import { z } from "zod";\nexport const name=z.string();')], "zod");
+    expect(zodSites.some((site) => site.family === "package-usage")).toBe(true);
+  });
+
+  it("marks non-literal Express query-parser configuration as missing evidence", () => {
+    const sites = analyzeUsageSites([file("app.ts", 'import express from "express";\nimport { parser } from "./config.js";\nconst app=express();\napp.set("query parser",parser);\napp.get("/q",(req,res)=>res.json(req.query.a));')], "express");
+    const query = sites.find((site) => site.family === "express-query-parser-default");
+    expect(query?.missingFacts).toContain("query_parser_configuration_is_not_literal");
+  });
 });

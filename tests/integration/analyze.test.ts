@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -7,6 +7,7 @@ import { analyzeUpgrade } from "../../src/analyze.js";
 import { sha256 } from "../../src/core/util.js";
 import { BaselineProvider } from "../../src/providers/baseline.js";
 import { renderHtml, validateReport } from "../../src/report/render.js";
+import { workingTreeSnapshot } from "../../src/source/inventory.js";
 import type { Provider } from "../../src/types.js";
 
 function fixtureRepo() {
@@ -23,6 +24,7 @@ function fixtureRepo() {
   execFileSync("git", ["config", "user.name", "Fixture"], { cwd: root });
   execFileSync("git", ["add", "."], { cwd: root });
   execFileSync("git", ["commit", "-qm", "fixture"], { cwd: root });
+  execFileSync("git", ["remote", "add", "origin", "https://github.com/example/fixture.git"], { cwd: root });
   return root;
 }
 
@@ -34,6 +36,8 @@ describe("analysis integration", () => {
     expect(report.findings).toHaveLength(1);
     expect(report.findings[0]?.disposition).toBe("review");
     expect(report.noteProvenance[0]?.verified).toBe(true);
+    const revision = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+    expect(report.findings[0]?.code.url).toBe(`https://github.com/example/fixture/blob/${revision}/src/app.ts#L3`);
     expect(() => validateReport(report)).not.toThrow();
   });
 
@@ -44,6 +48,33 @@ describe("analysis integration", () => {
     expect(providerFailure).toBe(true);
     expect(report.complete).toBe(false);
     expect(report.findings[0]?.disposition).toBe("unknown");
+  });
+
+  it("rejects notes that do not apply to the exact requested transition", async () => {
+    const root = fixtureRepo();
+    await expect(analyzeUpgrade({ repo: root, upgrade: { package: "express", from: "4.21.2", to: "5.2.0" }, notesPath: path.join(root, "notes.md"), provider: new BaselineProvider(), runMode: "baseline" })).rejects.toThrow(/Notes applicability mismatch/);
+  });
+
+  it("continues a partial provider batch and preserves successful rows", async () => {
+    const root = fixtureRepo();
+    writeFileSync(path.join(root, "src/app.ts"), 'import express from "express";\nconst app=express();\napp.get("/q1",(req,res)=>res.json(req.query.a));\napp.get("/q2",(req,res)=>res.json(req.query.b));\n');
+    execFileSync("git", ["add", "."], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "two candidates"], { cwd: root });
+    let calls = 0;
+    const baseline = new BaselineProvider();
+    const provider: Provider = {
+      name: "jev",
+      payload: (candidate) => baseline.payload(candidate),
+      judge: async (candidate) => {
+        calls += 1;
+        if (calls === 1) throw new Error("timeout");
+        return baseline.judge(candidate);
+      }
+    };
+    const { report, providerFailure } = await analyzeUpgrade({ repo: root, upgrade: { package: "express", from: "4.21.2", to: "5.1.0" }, notesPath: path.join(root, "notes.md"), provider, runMode: "jev" });
+    expect(providerFailure).toBe(true);
+    expect(report.findings).toHaveLength(2);
+    expect(report.findings.map((finding) => finding.disposition).sort()).toEqual(["review", "unknown"]);
   });
 
   it("escapes repository text in standalone HTML", async () => {
@@ -63,5 +94,48 @@ describe("analysis integration", () => {
     const missingKey = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "analyze", "--repo", fixtureRepo(), "--package", "express", "--from", "4.21.2", "--to", "5.1.0", "--notes", path.join(fixtureRepo(), "notes.md"), "--provider", "jev"], { encoding: "utf8", env: { ...process.env, TYPESAFE_API_KEY: "" } });
     expect(missingKey.status).toBe(69);
     expect(missingKey.stderr).toMatch(/requires TYPESAFE_API_KEY/);
+    const invalid = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "wat"], { encoding: "utf8" });
+    expect(invalid.status).toBe(64);
+    const incompleteRoot = fixtureRepo();
+    unlinkSync(path.join(incompleteRoot, "notes-manifest.json"));
+    const incomplete = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "analyze", "--repo", incompleteRoot, "--package", "express", "--from", "4.21.2", "--to", "5.1.0", "--notes", path.join(incompleteRoot, "notes.md"), "--provider", "baseline", "--out", path.join(incompleteRoot, "out")], { encoding: "utf8" });
+    expect(incomplete.status).toBe(2);
+  });
+
+  it("rejects tracked source symlinks and reports source-size truncation", () => {
+    const symlinkRoot = fixtureRepo();
+    symlinkSync("app.ts", path.join(symlinkRoot, "src/link.ts"));
+    execFileSync("git", ["add", "src/link.ts"], { cwd: symlinkRoot });
+    execFileSync("git", ["commit", "-qm", "symlink"], { cwd: symlinkRoot });
+    expect(() => workingTreeSnapshot(symlinkRoot)).toThrow(/Symlink source paths are not analyzed/);
+
+    const largeRoot = fixtureRepo();
+    writeFileSync(path.join(largeRoot, "src/large.ts"), `export const payload="${"x".repeat(300_000)}";\n`);
+    execFileSync("git", ["add", "src/large.ts"], { cwd: largeRoot });
+    execFileSync("git", ["commit", "-qm", "large"], { cwd: largeRoot });
+    const snapshot = workingTreeSnapshot(largeRoot);
+    expect(snapshot.truncatedCount).toBe(1);
+    expect(snapshot.limitations).toContain("source_inventory_truncated:1");
+  });
+
+  it("diff reads Git objects without altering the working tree", () => {
+    const root = fixtureRepo();
+    const base = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"express":"5.1.0"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"express":"5.1.0"}},"node_modules/express":{"version":"5.1.0"}}}\n');
+    execFileSync("git", ["add", "package.json", "package-lock.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "upgrade express"], { cwd: root });
+    const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+    const notesDir = path.join(root, "reviewed-notes");
+    mkdirSync(notesDir);
+    const note = '---\npackage: express\nfrom: 4.21.2\nto: 5.1.0\nsource: https://example.com/express\nretrieved: 2026-09-20\n---\n\n# Query\n\nFamily: express-query-parser-default\n\nThe default parser changed.\n';
+    writeFileSync(path.join(notesDir, "express.md"), note);
+    writeFileSync(path.join(notesDir, "notes-manifest.json"), JSON.stringify({ documents: [{ file: "express.md", package: "express", from: "4.21.2", to: "5.1.0", sourceUrl: "https://example.com/express", retrieved: "2026-09-20", sha256: sha256(note) }] }));
+    const before = execFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" });
+    const out = mkdtempSync(path.join(tmpdir(), "upgrade-radar-diff-out-"));
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "diff", "--repo", root, "--base", base, "--head", head, "--notes-dir", notesDir, "--provider", "baseline", "--out", out], { encoding: "utf8" });
+    expect(run.status).toBe(0);
+    const after = execFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" });
+    expect(after).toBe(before);
   });
 });

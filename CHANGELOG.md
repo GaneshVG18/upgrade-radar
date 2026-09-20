@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1 — preview
+
+- Stable clone-independent note evidence IDs and commit-pinned source links for clean repositories with supported origin remotes.
+- 48 isolated compatibility fixture directories plus a SHA-256 provenance manifest.
+- Expanded engineering coverage for provider failures, partial batches, source bounds/symlinks, CLI exit codes, Git-object diff behavior, fixture integrity, and generic package-level candidates.
+- Private family-split evaluation runner using the same adapter-derived candidate inventory for baseline and Jev; live results remain ignored and unpublished.
+
 ## 0.1.0 — preview
 
 - TypeScript library and CLI with `demo`, `analyze`, and Git-object `diff` flows.

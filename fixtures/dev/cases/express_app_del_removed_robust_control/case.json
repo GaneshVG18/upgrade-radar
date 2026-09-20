@@ -1,0 +1,22 @@
+{
+  "id": "express_app_del_removed_robust_control",
+  "family": "express-app-del-removed",
+  "split": "dev",
+  "label": "negative",
+  "caseRole": "robustness_control",
+  "package": "express",
+  "versions": {
+    "old": "4.21.2",
+    "new": "5.1.0"
+  },
+  "sourceUrl": "https://expressjs.com/en/guide/migrating-5.html",
+  "behavior": "availability of the legacy app.del route alias",
+  "noteText": "Express 5 removes the legacy `app.del()` alias; applications should use the normal DELETE route method.",
+  "sourceFile": "source.js",
+  "noteFile": "note.md",
+  "expected": {
+    "old": "function",
+    "new": "function"
+  },
+  "command": "npm run test:compat"
+}

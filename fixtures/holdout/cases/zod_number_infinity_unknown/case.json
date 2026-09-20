@@ -1,0 +1,19 @@
+{
+  "id": "zod_number_infinity_unknown",
+  "family": "zod-number-infinity",
+  "split": "holdout",
+  "label": "unknown",
+  "caseRole": "missing_evidence",
+  "package": "zod",
+  "versions": {
+    "old": "3.25.76",
+    "new": "4.1.5"
+  },
+  "sourceUrl": "https://zod.dev/v4/changelog",
+  "behavior": "acceptance of Infinity by a number schema",
+  "noteText": "Zod 4 number validation rejects infinite values, changing the result for schemas that accepted `Infinity` under Zod 3.",
+  "sourceFile": "source.js",
+  "noteFile": "note.md",
+  "missingEvidence": "behavior-relevant value or configuration is hidden behind an unresolved local wrapper/input",
+  "command": "npm run test:compat"
+}

@@ -1,0 +1,24 @@
+{
+  "id": "zod_optional_default_robust_cjs",
+  "family": "zod-optional-default",
+  "split": "holdout",
+  "label": "positive",
+  "caseRole": "robustness",
+  "package": "zod",
+  "versions": {
+    "old": "3.25.76",
+    "new": "4.1.5"
+  },
+  "sourceUrl": "https://zod.dev/v4/changelog",
+  "behavior": "materialization of defaults inside optional object fields",
+  "noteText": "Zod 4 applies defaults inside optional object fields, so an omitted field can materialize its default value in parsed output.",
+  "sourceFile": "source.js",
+  "noteFile": "note.md",
+  "expected": {
+    "old": {},
+    "new": {
+      "a": "x"
+    }
+  },
+  "command": "npm run test:compat"
+}
