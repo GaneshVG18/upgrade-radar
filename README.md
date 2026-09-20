@@ -4,13 +4,45 @@
 [![npm](https://img.shields.io/npm/v/upgrade-radar.svg)](https://www.npmjs.com/package/upgrade-radar)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**The dependency PR changed two lines. Which application behavior changed?**
+**Dependabot says `express 4 → 5`. Which lines of *your* code are standing in the blast radius?**
 
-Upgrade Radar connects reviewed dependency migration notes to the unchanged application code that actually uses the affected package behavior. It returns a short evidence-linked review queue with exact code and note spans, explicit unknowns, and coverage limitations.
+Upgrade Radar answers that with line numbers, and tells you plainly where it has no answer.
 
 **One command. No account or API key required for the deterministic baseline.**
 
-[See the standalone illustrative report →](https://ganeshvg18.github.io/upgrade-radar/demo/report.html)
+## The problem, concretely
+
+A dependency PR arrives. This is the entire diff:
+
+```diff
+-  "express": "4.21.2"
++  "express": "5.1.0"
+```
+
+Nothing in it tells you what happens to your application. The migration guide tells you what changed in Express — not what changed for you. Working out the difference means reading the guide with your own codebase open beside it.
+
+Upgrade Radar ships reviewed notes for four documented Express 4 → 5 behavior families. Run it against that PR and it reports where your code meets them:
+
+```text
+$ npx upgrade-radar review
+Upgrade Radar: 1 upgrade(s), 4 review, 0 no-direct-evidence, 0 unknown.
+Report: upgrade-radar-report/report.html
+```
+
+| Your code | What changed in Express 5 | How you would otherwise find out |
+| --- | --- | --- |
+| `src/app.ts:8` — `req.query.filters` | The default query parser changed, so `?filters[color]=red` parses into a different shape | Silently wrong results in production |
+| `src/app.ts:13` — `app.get("/promo/*")` | Wildcard route parameters must be named | Crash at startup |
+| `src/app.ts:18` — `app.del(...)` | The `app.del` alias was removed | Crash at startup |
+| `src/app.ts:25` — `req.param("orderId")` | `req.param()` was removed | Crash when that endpoint is called |
+
+Every row links to the exact line of the reviewed migration note that explains it. A `/healthz` route in the same file is not flagged, because nothing it uses changed.
+
+Three of those four crash loudly, and you would find them the first time you ran the app. The first one does not: the server boots, the tests pass, and the search endpoint quietly returns a different shape than it used to. That row is the reason this tool exists.
+
+**Those four families are what the bundled Express notes cover today — not the whole migration guide.** Upgrade Radar reports what it has reviewed evidence for and marks the rest as an explicit coverage gap. An empty review queue means it found no evidence within its supported surface. It is never a statement that an upgrade is safe to merge.
+
+[See a full standalone report →](https://ganeshvg18.github.io/upgrade-radar/demo/report.html)
 
 ![Upgrade Radar terminal demo](docs/demo/terminal.gif)
 
@@ -18,17 +50,17 @@ Upgrade Radar connects reviewed dependency migration notes to the unchanged appl
 
 The screenshot is generated from the repository's authored no-key demo. It is permanently labeled **ILLUSTRATIVE FIXTURE** and does not represent a live Jev evaluation.
 
-## Why this exists
+## What you get
 
-Migration guides describe what changed in a dependency. Your repository answers a different question: **does our code actually depend on that changed behavior?** Upgrade Radar joins those two pieces without pretending static analysis knows more than it does.
-
-For each supported upgrade it gives you:
+For each supported upgrade:
 
 - the exact application usage worth reviewing;
 - the exact reviewed migration-note span connected to that usage;
 - a disposition of `review`, `no_direct_evidence`, or `unknown`;
 - explicit coverage limits instead of silently treating missing evidence as safety; and
 - JSON, Markdown, and a standalone offline HTML report for local or CI review.
+
+Migration guides describe what changed in a dependency. Your repository answers a different question: **does our code actually depend on that changed behavior?** Upgrade Radar joins those two pieces without pretending static analysis knows more than it does.
 
 ## Run it
 
