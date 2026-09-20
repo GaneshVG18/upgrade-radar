@@ -141,7 +141,7 @@ The composite Action needs only read access to the checkout. With full Git histo
 
 `npm run test:compat` executes 60 authored cases across ten documented change families for Express, Zod, Glob, and Commander. Every case has an isolated fixture directory with source, reviewed note, case metadata, exact package versions, upstream provenance URL, and SHA-256 entries in `fixtures/manifest.json`. Positive and negative labels come from pinned old/new package behavior; unknown cases state the missing evidence. Robustness variants are marked and are not treated as independent samples. Live Jev evaluation output is intentionally private and is not published as a benchmark.
 
-More detail: [architecture](docs/architecture.md), [adding reviewed notes](docs/adding-notes.md), [limitations](docs/limitations.md), [evaluation](docs/evaluation.md), [privacy](docs/privacy.md), and [comparison](docs/comparison.md).
+More detail: [explainer](docs/explainer.md), [architecture](docs/architecture.md), [adding reviewed notes](docs/adding-notes.md), [limitations](docs/limitations.md), [evaluation](docs/evaluation.md), [privacy](docs/privacy.md), and [comparison](docs/comparison.md).
 
 ## Trust model
 
