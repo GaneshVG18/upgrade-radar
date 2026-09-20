@@ -95,9 +95,9 @@ export function validateReport(report: Report): void {
 function evidenceLink(span: EvidenceSpan, targetId: string, label: string): string {
   const url = safeUrl(span.url);
   const text = `${escapeHtml(span.path)}:${span.startLine}-${span.endLine}`;
-  return url
-    ? `<a class="evidence-link" href="${escapeHtml(url)}" rel="noreferrer" aria-label="${escapeHtml(label)} at ${text}">${text}<span aria-hidden="true">↗</span></a>`
-    : `<a class="evidence-link" href="#${targetId}" data-evidence-target="${targetId}" aria-label="${escapeHtml(label)} at ${text}">${text}</a>`;
+  const inspect = `<a class="evidence-link" href="#${targetId}" data-evidence-target="${targetId}" aria-label="Inspect ${escapeHtml(label)} at ${text}">${text}</a>`;
+  if (!url) return inspect;
+  return `${inspect}<a href="${escapeHtml(url)}" rel="noreferrer" aria-label="Open original ${escapeHtml(label)} source" title="Open original source"><span aria-hidden="true">↗</span><span class="sr-only">Open original source</span></a>`;
 }
 
 function excerptLines(span: EvidenceSpan): string {

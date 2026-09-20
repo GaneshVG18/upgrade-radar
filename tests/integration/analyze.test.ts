@@ -132,6 +132,10 @@ describe("analysis integration", () => {
     const root = fixtureRepo();
     const { report } = await analyzeUpgrade({ repo: root, upgrade: { package: "express", from: "4.21.2", to: "5.1.0" }, notesPath: path.join(root, "notes.md"), provider: new BaselineProvider(), runMode: "baseline" });
     const first = report.findings[0]!;
+    const linkedHtml = renderHtml(report);
+    expect(linkedHtml).toContain('href="#finding-1-note" data-evidence-target="finding-1-note"');
+    expect(linkedHtml).toContain('href="#finding-1-code" data-evidence-target="finding-1-code"');
+    expect(linkedHtml).toContain('title="Open original source"');
     const localEvidence = { ...first, code: { ...first.code }, note: { ...first.note } };
     delete localEvidence.code.url;
     delete localEvidence.note.url;
