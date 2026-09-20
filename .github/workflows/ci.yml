@@ -25,6 +25,7 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run test:compat
+      - run: npm run evidence:query-parser
       - run: npm run build
       - run: npm run smoke
       - run: npm run test:package

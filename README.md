@@ -31,16 +31,45 @@ Report: upgrade-radar-report/report.html
 
 | Your code | What changed in Express 5 | How you would otherwise find out |
 | --- | --- | --- |
-| `src/app.ts:8` — `req.query.filters` | The default query parser changed, so `?filters[color]=red` parses into a different shape | Silently wrong results in production |
+| `src/app.ts:8` — `req.query.filters` | The default query parser changed. `?filters[color]=red` no longer parses into a nested object, so `req.query.filters` becomes `undefined` | Silently wrong results in production |
 | `src/app.ts:13` — `app.get("/promo/*")` | Wildcard route parameters must be named | Crash at startup |
 | `src/app.ts:18` — `app.del(...)` | The `app.del` alias was removed | Crash at startup |
 | `src/app.ts:25` — `req.param("orderId")` | `req.param()` was removed | Crash when that endpoint is called |
 
 Every row links to the exact line of the reviewed migration note that explains it. A `/healthz` route in the same file is not flagged, because nothing it uses changed.
 
-Three of those four crash loudly, and you would find them the first time you ran the app. The first one does not: the server boots, the tests pass, and the search endpoint quietly returns a different shape than it used to. That row is the reason this tool exists.
+Three of those four crash loudly, and you would find them the first time you ran the app. The first one does not: Express raises no error and the request still returns 200, the parsed value is simply absent. What that does to a given handler depends on how it treats `undefined` — which is exactly why it is worth a human look rather than an automatic verdict. That row is the reason this tool exists.
 
 **Those four families are what the bundled Express notes cover today — not the whole migration guide.** Upgrade Radar reports what it has reviewed evidence for and marks the rest as an explicit coverage gap. An empty review queue means it found no evidence within its supported surface. It is never a statement that an upgrade is safe to merge.
+
+### Verify that first row yourself
+
+The query-parser change is not taken on trust from the migration guide. This repository boots both pinned Express versions in-process and sends one identical request to each:
+
+```sh
+npm run evidence:query-parser
+```
+
+```text
+Request path: /products?filters[color]=red&filters[size]=L
+
+Express 4.21.2 — default query parser
+  req.query.filters  = {"color":"red","size":"L"}
+Express 5.1.0 — default query parser
+  req.query.filters  = undefined
+Express 5.1.0 — app.set('query parser', 'extended')  [CONTROL]
+  req.query.filters  = {"color":"red","size":"L"}
+```
+
+The control matters as much as the change: when an application selects the parser explicitly, Upgrade Radar reports that same line as `no_direct_evidence` with the reason `Visible query parser configuration preserves extended parsing`, instead of adding it to your review queue.
+
+### Try it before pointing it at your own repository
+
+```sh
+npx upgrade-radar demo
+```
+
+`npx` downloads the package itself, as any install does. After that the demo runs entirely locally: it writes a complete authored report to `upgrade-radar-report/` with no provider calls, no API key, and no repository of your own. Open `report.html` to see exactly what the output looks like before you run `review` anywhere that matters.
 
 [See a full standalone report →](https://ganeshvg18.github.io/upgrade-radar/demo/report.html)
 
