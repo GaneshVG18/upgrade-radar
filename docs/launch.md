@@ -10,7 +10,7 @@
 
 ## Single post
 
-The dependency PR changed two lines. Which application behavior changed? I built Upgrade Radar: it links npm migration notes to the exact JS/TS usage worth reviewing, with executable Express/Zod fixtures and explicit unknowns. Optional Jev judges relevance; code owns citations. REPO_URL
+The dependency PR changed two lines. Which app behavior changed? Upgrade Radar links npm migration notes to exact JS/TS usage worth reviewing, with Express/Zod fixtures and explicit unknowns. Jev judges relevance; code owns citations. https://github.com/GaneshVG18/upgrade-radar
 
 ## Optional thread
 
