@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2 — preview
+
+- Corrected public GitHub Action examples to reference the current prerelease tag consistently.
+
 ## 0.1.1 — preview
 
 - Stable clone-independent note evidence IDs and commit-pinned source links for clean repositories with supported origin remotes.

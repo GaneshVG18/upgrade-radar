@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: GaneshVG18/upgrade-radar@v0.1.0
+      - uses: GaneshVG18/upgrade-radar@v0.1.2
         env:
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
         with:

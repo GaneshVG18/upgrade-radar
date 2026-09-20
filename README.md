@@ -73,7 +73,7 @@ Code owns package identity, versions, source/note spans, hashes, redaction, caps
 ## GitHub Action
 
 ```yaml
-- uses: GaneshVG18/upgrade-radar@v0.1.1
+- uses: GaneshVG18/upgrade-radar@v0.1.2
   with:
     base: ${{ github.event.pull_request.base.sha }}
     head: ${{ github.event.pull_request.head.sha }}
