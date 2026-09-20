@@ -9,6 +9,8 @@ Upgrade Radar connects reviewed dependency migration notes to the unchanged appl
 
 [See the standalone illustrative report →](https://ganeshvg18.github.io/upgrade-radar/demo/report.html)
 
+![Upgrade Radar terminal demo](docs/demo/terminal.gif)
+
 ![Illustrative Upgrade Radar report](docs/demo/report.png)
 
 The screenshot is generated from the repository's authored no-key demo. It is permanently labeled **ILLUSTRATIVE FIXTURE** and does not represent a live Jev evaluation.
@@ -30,7 +32,7 @@ For each supported upgrade it gives you:
 From the npm project you want to review, on Node 24 or newer:
 
 ```sh
-npx --yes upgrade-radar@0.1.5 review
+npx --yes --package=github:GaneshVG18/upgrade-radar#v0.1.5 upgrade-radar review
 ```
 
 That is the normal path. `review` uses the current repository and `HEAD`, infers the comparison base from a local `main`/`master` merge-base (falling back to `HEAD~1`), uses the bundled reviewed migration notes, and runs the deterministic no-key baseline. It writes `upgrade-radar-report/{report.html,report.md,report.json}`. No TypeSafe account or API key is required.
@@ -42,13 +44,7 @@ Upgrade Radar: 1 upgrade(s), 1 review, 0 no-direct-evidence, 0 unknown.
 Report: /path/to/project/upgrade-radar-report/report.html
 ```
 
-For a reproducible Git-pinned CLI run:
-
-```sh
-npx --yes --package=github:GaneshVG18/upgrade-radar#v0.1.5 upgrade-radar review
-```
-
-For CI, pin the composite Action to the release tag shown below.
+The npm package is prepared but not published yet. Until registry publication is complete, the release-tagged GitHub command above is the supported install path. For CI, pin the composite Action to the release tag shown below.
 
 If there are no direct dependency version changes in the inferred comparison, the command succeeds with an empty report. If an upgrade is detected but reviewed notes or source coverage are insufficient, the report is incomplete and exits `2`. For packages without applicable reviewed notes, Upgrade Radar still lists resolved usage sites as manual review starting points; those rows are `unknown`, never findings of breakage.
 
