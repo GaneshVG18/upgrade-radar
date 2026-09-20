@@ -1,5 +1,5 @@
 import path from "node:path";
-import { analyzeUsageSites } from "./adapters/index.js";
+import { analyzeUsageSites, unsupportedPackageReferences } from "./adapters/index.js";
 import { validateLocalDependencyFacts } from "./core/dependency.js";
 import { safeUrl, sha256, shortHash } from "./core/util.js";
 import { parseNotes } from "./notes/parser.js";
@@ -20,6 +20,7 @@ interface PreparedAnalysis {
   notes: NoteDocument;
   snapshot: SourceSnapshot;
   candidates: Candidate[];
+  unknownItems: string[];
   limitations: string[];
   hardIncomplete: boolean;
 }
@@ -42,6 +43,7 @@ function prepare(options: Omit<AnalyzeOptions, "provider" | "runMode">): Prepare
   const factLimitations = options.skipDependencyValidation ? [] : validateLocalDependencyFacts(options.repo, options.upgrade);
   const snapshot = options.snapshot ?? workingTreeSnapshot(options.repo);
   const usageSites = analyzeUsageSites(snapshot.files, options.upgrade.package);
+  const unknownItems = unsupportedPackageReferences(snapshot.files, options.upgrade.package);
   const cleanRevision = /^[0-9a-f]{40}$/i.test(snapshot.revision);
   if (snapshot.sourceWebBase && cleanRevision) {
     for (const usage of usageSites) {
@@ -70,7 +72,8 @@ function prepare(options: Omit<AnalyzeOptions, "provider" | "runMode">): Prepare
     if (capped) break;
   }
   const limitations = [...commonLimitations, ...factLimitations, ...snapshot.limitations];
-  let hardIncomplete = snapshot.truncatedCount > 0;
+  let hardIncomplete = snapshot.truncatedCount > 0 || unknownItems.length > 0;
+  limitations.push(...unknownItems);
   if (!notes.provenanceVerified) {
     limitations.push("notes_manifest_missing_or_hash_provenance_mismatch");
     hardIncomplete = true;
@@ -84,7 +87,7 @@ function prepare(options: Omit<AnalyzeOptions, "provider" | "runMode">): Prepare
   }
   if (!cleanRevision) limitations.push("source_line_links_unavailable_for_dirty_worktree");
   else if (!snapshot.sourceWebBase) limitations.push("source_line_links_unavailable_without_supported_origin_remote");
-  return { upgrade: options.upgrade, notes, snapshot, candidates, limitations, hardIncomplete };
+  return { upgrade: options.upgrade, notes, snapshot, candidates, unknownItems, limitations, hardIncomplete };
 }
 
 function verifyEvidence(candidate: Candidate, prepared: PreparedAnalysis): void {
@@ -129,7 +132,10 @@ export async function analyzeUpgrade(options: AnalyzeOptions): Promise<{ report:
       });
     }
   }
-  const unknownItems = findings.filter((f) => f.disposition === "unknown").map((f) => `${f.id}:${f.reasons.join("|")}`);
+  const unknownItems = [
+    ...prepared.unknownItems,
+    ...findings.filter((f) => f.disposition === "unknown").map((f) => `${f.id}:${f.reasons.join("|")}`)
+  ];
   const complete = !prepared.hardIncomplete && unknownItems.length === 0 && !providerFailure;
   const report: Report = {
     schemaVersion: "upgrade-radar-report/v1",

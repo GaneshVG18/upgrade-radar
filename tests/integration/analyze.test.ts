@@ -192,4 +192,59 @@ describe("analysis integration", () => {
     expect(report.unknownItems).toContain("missing_applicable_notes:zod:3.25.76->4.1.5");
     expect(report.coverageLimitations).toContain("missing_applicable_notes:zod:3.25.76->4.1.5");
   });
+
+  it("treats a malformed notes manifest as unverified provenance instead of invalid input", () => {
+    const root = fixtureRepo();
+    const base = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"express":"5.1.0"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"express":"5.1.0"}},"node_modules/express":{"version":"5.1.0"}}}\n');
+    execFileSync("git", ["add", "package.json", "package-lock.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "upgrade express"], { cwd: root });
+    const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+
+    const notesDir = path.join(root, "malformed-notes");
+    mkdirSync(notesDir);
+    const note = readFileSync(path.join(root, "notes.md"), "utf8");
+    writeFileSync(path.join(notesDir, "express.md"), note);
+    writeFileSync(path.join(notesDir, "notes-manifest.json"), "{invalid json\n");
+    const out = mkdtempSync(path.join(tmpdir(), "upgrade-radar-malformed-notes-"));
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "diff", "--repo", root, "--base", base, "--head", head, "--notes-dir", notesDir, "--provider", "baseline", "--out", out], { encoding: "utf8" });
+
+    expect(run.status).toBe(2);
+    expect(run.stderr).toBe("");
+    const report = JSON.parse(readFileSync(path.join(out, "report.json"), "utf8")) as Report;
+    expect(report.complete).toBe(false);
+    expect(report.noteProvenance[0]?.verified).toBe(false);
+    expect(report.coverageLimitations).toContain("notes_manifest_missing_or_hash_provenance_mismatch");
+  });
+
+  it("marks target-package dynamic imports as explicit unknowns", () => {
+    const root = fixtureRepo();
+    writeFileSync(path.join(root, "src/app.ts"), 'const mod = await import("express");\nconst express = mod.default;\nconst app = express();\napp.get("/q", (req, res) => res.json(req.query.filters));\n');
+    execFileSync("git", ["add", "src/app.ts"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "dynamic express import"], { cwd: root });
+    const out = mkdtempSync(path.join(tmpdir(), "upgrade-radar-dynamic-import-"));
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "analyze", "--repo", root, "--package", "express", "--from", "4.21.2", "--to", "5.1.0", "--notes", path.join(root, "notes.md"), "--provider", "baseline", "--out", out], { encoding: "utf8" });
+
+    expect(run.status).toBe(2);
+    const report = JSON.parse(readFileSync(path.join(out, "report.json"), "utf8")) as Report;
+    expect(report.complete).toBe(false);
+    expect(report.counts.unknown).toBe(1);
+    expect(report.unknownItems).toContain("unsupported_package_reference:express:dynamic_import:src/app.ts:1");
+    expect(report.coverageLimitations).toContain("unsupported_package_reference:express:dynamic_import:src/app.ts:1");
+  });
+
+  it("marks computed requires with a resolved target-package literal as explicit unknowns", () => {
+    const root = fixtureRepo();
+    writeFileSync(path.join(root, "src/app.ts"), 'const packageName = "express";\nconst express = require(packageName);\nconst app = express();\napp.get("/q", (req, res) => res.json(req.query.filters));\n');
+    execFileSync("git", ["add", "src/app.ts"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "computed express require"], { cwd: root });
+    const out = mkdtempSync(path.join(tmpdir(), "upgrade-radar-computed-require-"));
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "analyze", "--repo", root, "--package", "express", "--from", "4.21.2", "--to", "5.1.0", "--notes", path.join(root, "notes.md"), "--provider", "baseline", "--out", out], { encoding: "utf8" });
+
+    expect(run.status).toBe(2);
+    const report = JSON.parse(readFileSync(path.join(out, "report.json"), "utf8")) as Report;
+    expect(report.complete).toBe(false);
+    expect(report.unknownItems).toContain("unsupported_package_reference:express:computed_require:src/app.ts:2");
+  });
 });

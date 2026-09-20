@@ -68,9 +68,20 @@ function providerFrom(args: Args): { provider: Provider; mode: RunMode } {
 function noteFile(notesDir: string, upgrade: Upgrade): string | undefined {
   const manifestPath = path.join(notesDir, "notes-manifest.json");
   if (existsSync(manifestPath)) {
-    const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { documents?: Array<{ file: string; package: string; from: string; to: string }> };
-    const row = manifest.documents?.find((d) => d.package === upgrade.package && d.from === upgrade.from && d.to === upgrade.to);
-    if (row) return path.join(notesDir, row.file);
+    try {
+      const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { documents?: unknown };
+      if (Array.isArray(manifest.documents)) {
+        const row = (manifest.documents as Array<{ file?: unknown; package?: unknown; from?: unknown; to?: unknown }>).find(
+          (d) => d.package === upgrade.package && d.from === upgrade.from && d.to === upgrade.to && typeof d.file === "string"
+        );
+        if (row && typeof row.file === "string") {
+          const candidate = path.join(notesDir, row.file);
+          if (existsSync(candidate)) return candidate;
+        }
+      }
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+    }
   }
   return readdirSync(notesDir).filter((f) => f.endsWith(".md")).map((f) => path.join(notesDir, f)).find((f) => {
     const text = readFileSync(f, "utf8");

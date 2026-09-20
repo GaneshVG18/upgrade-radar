@@ -260,3 +260,46 @@ export function analyzeUsageSites(files: SourceFile[], targetPackage: string): U
   }
   return sites;
 }
+
+export function unsupportedPackageReferences(files: SourceFile[], targetPackage: string): string[] {
+  const items: string[] = [];
+  for (const file of files) {
+    const sf = parse(file);
+    const literalBindings = new Map<string, string>();
+    const collectLiterals = (node: ts.Node): void => {
+      if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
+        if (ts.isStringLiteral(node.initializer) || ts.isNoSubstitutionTemplateLiteral(node.initializer)) {
+          literalBindings.set(node.name.text, node.initializer.text);
+        }
+      }
+      ts.forEachChild(node, collectLiterals);
+    };
+    collectLiterals(sf);
+
+    const moduleName = (node: ts.Expression | undefined): string | undefined => {
+      if (!node) return undefined;
+      if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
+      if (ts.isIdentifier(node)) return literalBindings.get(node.text);
+      return undefined;
+    };
+    const add = (node: ts.Node, kind: "dynamic_import" | "computed_require"): void => {
+      const line = sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1;
+      items.push(`unsupported_package_reference:${targetPackage}:${kind}:${file.path}:${line}`);
+    };
+    const visit = (node: ts.Node): void => {
+      if (ts.isCallExpression(node) && node.arguments.length >= 1) {
+        const arg = node.arguments[0];
+        if (!arg) return;
+        if (node.expression.kind === ts.SyntaxKind.ImportKeyword && moduleName(arg) === targetPackage) {
+          add(node, "dynamic_import");
+        } else if (ts.isIdentifier(node.expression) && node.expression.text === "require"
+          && !ts.isStringLiteral(arg) && moduleName(arg) === targetPackage) {
+          add(node, "computed_require");
+        }
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(sf);
+  }
+  return [...new Set(items)];
+}

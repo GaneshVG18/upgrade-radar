@@ -30,11 +30,19 @@ function parseFrontmatter(text: string): { meta: Record<string, string>; bodySta
 
 function manifestFor(notePath: string): ManifestEntry | undefined {
   const manifestPath = path.join(path.dirname(notePath), "notes-manifest.json");
+  let text: string;
   try {
-    const parsed = JSON.parse(readFileSync(manifestPath, "utf8")) as { documents?: ManifestEntry[] };
-    return parsed.documents?.find((entry) => entry.file === path.basename(notePath));
+    text = readFileSync(manifestPath, "utf8");
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+    throw error;
+  }
+  try {
+    const parsed = JSON.parse(text) as { documents?: unknown };
+    if (!Array.isArray(parsed.documents)) return undefined;
+    return (parsed.documents as ManifestEntry[]).find((entry) => entry?.file === path.basename(notePath));
+  } catch (error) {
+    if (error instanceof SyntaxError) return undefined;
     throw error;
   }
 }
