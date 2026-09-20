@@ -58,13 +58,13 @@ node dist/cli.js diff \
 
 Every run writes `report.json`, `report.md`, and standalone `report.html`. JSON uses `upgrade-radar-report/v1`. Rows are `review`, `no_direct_evidence`, or `unknown`. `no_direct_evidence` only means the evaluated note/site pair lacks direct evidence; it is never a statement that an upgrade is safe to merge.
 
-Exit codes are stable: `0` completed advisory report, `2` incomplete report, `64` invalid input, and `69` provider failure. Findings alone do not fail a run.
+Exit codes are stable: `0` completed advisory report, `2` incomplete report, `64` invalid input, and `69` provider failure. Findings alone do not fail a run. Detected dependency upgrades with missing applicable notes remain visible as explicit unknown coverage gaps rather than being silently dropped.
 
 ## Supported scope
 
 First-class v0.1 coverage is JavaScript/TypeScript, npm root projects, direct dependencies, package-lock v2/v3, Express **4.21.2 → 5.1.0**, and Zod **3.25.76 → 4.1.5**. Other packages can receive generic usage suggestions without inheriting those coverage claims.
 
-Unsupported or bounded areas stay visible as limitations/unknowns: workspaces, non-npm package managers, transitive-only upgrades, computed imports, unresolved wrappers, full call-graph/dataflow reasoning, incomplete notes, source/candidate caps, and unsupported lockfiles.
+Unsupported or bounded areas stay visible as limitations/unknowns: workspaces, non-npm package managers, transitive-only upgrades, arbitrary runtime-computed package references, unresolved wrappers, full call-graph/dataflow reasoning, incomplete notes, source/candidate caps, and unsupported lockfiles. Dynamic imports and resolvable computed package references are surfaced as explicit unknowns rather than treated as evidence of safety.
 
 ## Why the split between code and Jev?
 
@@ -73,7 +73,7 @@ Code owns package identity, versions, source/note spans, hashes, redaction, caps
 ## GitHub Action
 
 ```yaml
-- uses: GaneshVG18/upgrade-radar@v0.1.3
+- uses: GaneshVG18/upgrade-radar@v0.1.4
   with:
     base: ${{ github.event.pull_request.base.sha }}
     head: ${{ github.event.pull_request.head.sha }}

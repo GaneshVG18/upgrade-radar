@@ -1,6 +1,6 @@
 {
   "name": "upgrade-radar",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "description": "Evidence-linked dependency upgrade review for TypeScript, powered by Jev",
   "type": "module",
