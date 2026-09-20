@@ -6,6 +6,7 @@
 - [ ] `npm run notes:manifest` produces no unintended diff.
 - [ ] `npm run corpus:generate` produces no unintended diff.
 - [ ] `npm run check` succeeds.
+- [ ] `npm run test:package` proves a production-only tarball install can run zero-config review from a separate multi-commit consumer repository.
 - [ ] Example baseline reports complete with verified note provenance.
 - [ ] Fresh-clone demo produces semantically identical JSON aside from timestamp.
 - [ ] `git status`, staged diff, and tracked-file inventory reviewed.

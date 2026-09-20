@@ -1,6 +1,7 @@
 node_modules/
 dist/
 artifacts/
+upgrade-radar-report/
 .private-evals/
 .env
 .env.*

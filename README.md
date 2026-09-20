@@ -8,15 +8,36 @@ Upgrade Radar connects reviewed dependency migration notes to the unchanged appl
 
 The screenshot is generated from the repository's authored no-key demo. It is permanently labeled **ILLUSTRATIVE FIXTURE** and does not represent a live Jev evaluation.
 
+## Why this exists
+
+Migration guides describe what changed in a dependency. Your repository answers a different question: **does our code actually depend on that changed behavior?** Upgrade Radar joins those two pieces without pretending static analysis knows more than it does.
+
+For each supported upgrade it gives you:
+
+- the exact application usage worth reviewing;
+- the exact reviewed migration-note span connected to that usage;
+- a disposition of `review`, `no_direct_evidence`, or `unknown`;
+- explicit coverage limits instead of silently treating missing evidence as safety; and
+- JSON, Markdown, and a standalone offline HTML report for local or CI review.
+
 ## Run it
 
 From the npm project you want to review, on Node 24:
 
 ```sh
-npx --yes --package=github:GaneshVG18/upgrade-radar upgrade-radar review
+npx --yes --package=github:GaneshVG18/upgrade-radar#main upgrade-radar review
 ```
 
 That is the normal path. `review` uses the current repository and `HEAD`, infers the comparison base from a local `main`/`master` merge-base (falling back to `HEAD~1`), uses the bundled reviewed Express/Zod migration notes, and runs the deterministic no-key baseline. It writes `upgrade-radar-report/{report.html,report.md,report.json}`. No TypeSafe account or API key is required.
+
+Example terminal summary:
+
+```text
+Upgrade Radar: 1 upgrade(s), 1 review, 0 no-direct-evidence, 0 unknown.
+Report: /path/to/project/upgrade-radar-report/report.html
+```
+
+The preview is distributed from GitHub rather than the npm registry. For reproducible automation, pin the Git dependency or Action to a reviewed commit/tag instead of a moving branch.
 
 If there are no direct dependency version changes in the inferred comparison, the command succeeds with an empty report instead of pretending there was work to review. If an upgrade is detected but bundled notes or source coverage are insufficient, the report is incomplete and exits `2` rather than looking clean.
 
@@ -95,16 +116,22 @@ Code owns package identity, versions, source/note spans, hashes, redaction, caps
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0
-- uses: GaneshVG18/upgrade-radar@v0.1.4
+- uses: GaneshVG18/upgrade-radar@main
 ```
 
-The composite Action needs only read access to the checkout. With full Git history available, it infers refs the same way as the CLI. `base`, `head`, `notes-dir`, and `provider` are optional overrides. Bundled notes and the no-key baseline are the defaults. It writes the report to the job summary and uploads an artifact. Do not expose provider keys to untrusted fork PR jobs. See [privacy](docs/privacy.md) for an opt-in trusted live-mode example.
+The composite Action needs only read access to the checkout. With full Git history available, it infers refs the same way as the CLI. `base`, `head`, `notes-dir`, and `provider` are optional overrides. Bundled notes and the no-key baseline are the defaults. It writes the report to the job summary and uploads an artifact. During the preview, `@main` is the moving convenience ref; pin a reviewed commit or release tag for production CI. Do not expose provider keys to untrusted fork PR jobs. See [privacy](docs/privacy.md) for an opt-in trusted live-mode example.
 
 ## Evidence and evaluation
 
 `npm run test:compat` executes 48 authored cases across eight documented Express/Zod change families. Every case has an isolated fixture directory with source, reviewed note, case metadata, exact package versions, upstream provenance URL, and SHA-256 entries in `fixtures/manifest.json`. Positive and negative labels come from pinned old/new package behavior; unknown cases state the missing evidence. Robustness variants are marked and are not treated as independent samples. Live Jev evaluation output is intentionally private and is not published as a benchmark.
 
 More detail: [architecture](docs/architecture.md), [limitations](docs/limitations.md), [evaluation](docs/evaluation.md), [privacy](docs/privacy.md), and [comparison](docs/comparison.md).
+
+## Trust model
+
+Upgrade Radar is intentionally advisory. Deterministic host code owns package identity, versions, source/note spans, hashes, caps, redaction, and report citations. Optional Jev only judges one bounded note/usage pair at a time. Ambiguous, incomplete, contradictory, unsupported, or provider-failed cases become visible unknowns rather than automatic approvals.
+
+It does **not** execute the repository being analyzed, install its dependencies, fetch arbitrary migration URLs, comment on pull requests, or merge code. See [SECURITY.md](SECURITY.md) and [docs/limitations.md](docs/limitations.md) for the exact boundary.
 
 ## Adding a behavior family
 

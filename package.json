@@ -2,7 +2,17 @@
   "name": "upgrade-radar",
   "version": "0.1.4",
   "private": true,
-  "description": "Evidence-linked dependency upgrade review for TypeScript, powered by Jev",
+  "description": "Evidence-linked dependency upgrade review for TypeScript with optional bounded Jev",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GaneshVG18/upgrade-radar.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GaneshVG18/upgrade-radar/issues"
+  },
+  "homepage": "https://github.com/GaneshVG18/upgrade-radar#readme",
+  "keywords": ["dependency-updates", "static-analysis", "typescript", "migration", "jev"],
   "type": "module",
   "files": ["dist", "examples/notes", "README.md", "LICENSE"],
   "main": "./dist/index.js",
@@ -22,13 +32,14 @@
     "lint": "oxlint src tests scripts",
     "test": "npm run build && vitest run",
     "test:compat": "node scripts/compat.mjs",
+    "test:package": "node scripts/package-smoke.mjs",
     "corpus:generate": "node scripts/build-corpus.mjs",
     "notes:manifest": "node scripts/update-notes-manifest.mjs",
     "smoke": "node scripts/smoke.mjs",
     "demo": "node dist/cli.js demo --out artifacts/demo",
     "review": "node dist/cli.js review",
     "eval:live": "node scripts/eval-live.mjs",
-    "check": "npm run typecheck && npm run lint && npm test && npm run test:compat && npm run build && npm run smoke"
+    "check": "npm run typecheck && npm run lint && npm test && npm run test:compat && npm run build && npm run smoke && npm run test:package"
   },
   "dependencies": {
     "@typesafe-ai/sdk": "0.6.0",

@@ -22,6 +22,7 @@ jobs:
       - run: npm run test:compat
       - run: npm run build
       - run: npm run smoke
+      - run: npm run test:package
       - name: Baseline example reports
         run: |
           node dist/cli.js analyze --repo ./examples/express-app --package express --from 4.21.2 --to 5.1.0 --notes ./examples/notes/express-5.md --provider baseline --out artifacts/express

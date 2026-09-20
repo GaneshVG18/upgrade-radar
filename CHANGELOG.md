@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added a distribution smoke test that packs the project, installs only production dependencies in a clean runner, and executes zero-config review against a separate multi-commit consumer repository.
+- Added npm/GitHub package metadata and ignored the default local report directory in this repository.
 - Added a zero-config `review` command that defaults to the current repository, infers the comparison refs, uses bundled reviewed Express/Zod notes, runs the no-key baseline, and writes a ready-to-open report.
 - Made the composite GitHub Action zero-config after a full-history checkout; base/head, notes directory, and provider are now optional overrides.
 - Made Git-installed/npx usage self-building via `prepare`, included runtime notes in the package, and fixed `typescript` from a dev-only dependency to a required runtime dependency after a clean consumer install exposed the packaging bug.
