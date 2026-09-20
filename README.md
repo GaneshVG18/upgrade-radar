@@ -10,6 +10,8 @@ The screenshot is generated from the repository's authored no-key demo. It is pe
 
 ## No-key quickstart
 
+`Upgrade Radar` is pinned to Node 24.11.1. The repository enforces its Node engine during npm installs so an unsupported major fails early instead of producing a misleading test result.
+
 ```sh
 nvm use
 npm ci --ignore-scripts
@@ -41,7 +43,7 @@ node dist/cli.js analyze \
   --provider jev --dry-run
 ```
 
-Live mode requires `TYPESAFE_API_KEY` in the environment. Missing credentials fail with provider exit code `69`; Upgrade Radar never silently falls back to fixture or baseline decisions.
+`--dry-run` does not require a TypeSafe API key and never sends a provider request. Live mode requires `TYPESAFE_API_KEY` in the environment. Missing credentials fail with provider exit code `69`; Upgrade Radar never silently falls back to fixture or baseline decisions.
 
 ## Diff two Git revisions
 

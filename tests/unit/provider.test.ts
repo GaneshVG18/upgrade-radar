@@ -25,6 +25,19 @@ describe("Jev host policy", () => {
     expect((await provider.judge(candidate)).disposition).toBe("unknown");
   });
 
+  it("treats an explicit old-behavior-preserving setting as no direct evidence", async () => {
+    const configured = {
+      ...candidate,
+      usage: { ...candidate.usage, configuration: { queryParser: "extended" } }
+    };
+    const fake = { systemOne: async () => ({ model: "jev-test", usage: { input_tokens: 1, output_tokens: 1 }, answers: { disposition: { type: "choice", choice: "review", confidence: .9, probabilities: { review: .9, not_this_change: .05, insufficient_evidence: .05 } }, depends_on_behavior: { type: "noul", noul: .9 }, preserves_old_behavior: { type: "noul", noul: .95 }, missing_required_facts: { type: "noul", noul: .05 } } }) };
+    const provider = new JevProvider({ client: fake as never, model: "jev-test" });
+    expect(await provider.judge(configured)).toMatchObject({
+      disposition: "no_direct_evidence",
+      reasons: ["jev_explicit_configuration_preserves_old_behavior"]
+    });
+  });
+
   it("invalidates cache keys on source, note, policy inputs and model; aliases without resolved model bypass", () => {
     const first = providerCacheKey(candidate, "jev-1.13.0");
     expect(first).toBeTruthy();

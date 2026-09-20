@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+- Redesigned the standalone HTML report as a compact retro engineering review instrument while preserving offline operation, evidence navigation, filtering, run context, unknown coverage, and keyboard/mobile behavior.
+- Updated Jev host policy to treat an explicitly shown old-behavior-preserving configuration as pair-local `no_direct_evidence` instead of an ambiguous unknown.
+- Made Jev dry-run credential-free because it only renders the redacted payload and sends no provider request.
+- Restricted diff-mode note discovery to regular files inside the supplied notes directory; manifest path escapes and note symlinks are ignored.
+- Enforced the documented Node 24 runtime during npm installs with `engine-strict`.
+
+## 0.1.4 — preview
+
+- Kept direct dependency upgrades visible as incomplete unknown coverage when applicable reviewed notes are missing.
+- Made malformed notes manifests fall back to note discovery while retaining unverified provenance and incomplete status.
+- Surfaced target-package dynamic imports and resolvable computed requires as explicit unknowns.
+- Hardened revision-pinned source links for GitHub/GitLab and removed noisy missing-origin Git errors.
+- Added CLI help and expanded real local Express/Zod product auditing.
+
 ## 0.1.3 — preview
 
 - Added an end-to-end CI smoke of the composite GitHub Action using a synthetic local Git fixture, including report verification and artifact upload.

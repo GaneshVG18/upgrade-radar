@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { analyzeUpgrade, dryRunPlan, mergeReports } from "./analyze.js";
 import { directDependenciesFromText, lockVersionFromText } from "./core/dependency.js";
 import { illustrativeDemoReport } from "./demo.js";
-import { BaselineProvider } from "./providers/baseline.js";
+import { BaselineProvider, providerPayload } from "./providers/baseline.js";
 import { JevProvider } from "./providers/jev.js";
 import { writeReport } from "./report/render.js";
 import { gitObjectSnapshot, gitTextAt } from "./source/inventory.js";
@@ -55,14 +55,33 @@ function required(args: Args, name: string): string {
   return value;
 }
 
-function providerFrom(args: Args): { provider: Provider; mode: RunMode } {
+function providerNameFrom(args: Args): "baseline" | "jev" {
   const name = typeof args.provider === "string" ? args.provider : "baseline";
+  if (name === "baseline" || name === "jev") return name;
+  throw new Error(`Unsupported provider: ${name}`);
+}
+
+function providerFrom(args: Args): { provider: Provider; mode: RunMode } {
+  const name = providerNameFrom(args);
   if (name === "baseline") return { provider: new BaselineProvider(), mode: "baseline" };
   if (name === "jev") {
     if (!process.env.TYPESAFE_API_KEY?.trim()) throw Object.assign(new Error("--provider jev requires TYPESAFE_API_KEY"), { providerFailure: true });
     return { provider: new JevProvider(), mode: "jev" };
   }
-  throw new Error(`Unsupported provider: ${name}`);
+  throw new Error(`Unsupported provider: ${String(name)}`);
+}
+
+function noteCandidate(notesDir: string, file: string): string | undefined {
+  const root = realpathSync(notesDir);
+  const candidate = path.resolve(root, file);
+  const relative = path.relative(root, candidate);
+  if (!relative || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative) || !existsSync(candidate)) return undefined;
+  const stat = lstatSync(candidate);
+  if (!stat.isFile() || stat.isSymbolicLink()) return undefined;
+  const real = realpathSync(candidate);
+  const realRelative = path.relative(root, real);
+  if (!realRelative || realRelative.startsWith(`..${path.sep}`) || path.isAbsolute(realRelative)) return undefined;
+  return real;
 }
 
 function noteFile(notesDir: string, upgrade: Upgrade): string | undefined {
@@ -75,15 +94,15 @@ function noteFile(notesDir: string, upgrade: Upgrade): string | undefined {
           (d) => d.package === upgrade.package && d.from === upgrade.from && d.to === upgrade.to && typeof d.file === "string"
         );
         if (row && typeof row.file === "string") {
-          const candidate = path.join(notesDir, row.file);
-          if (existsSync(candidate)) return candidate;
+          const candidate = noteCandidate(notesDir, row.file);
+          if (candidate) return candidate;
         }
       }
     } catch (error) {
       if (!(error instanceof SyntaxError)) throw error;
     }
   }
-  return readdirSync(notesDir).filter((f) => f.endsWith(".md")).map((f) => path.join(notesDir, f)).find((f) => {
+  return readdirSync(notesDir).filter((f) => f.endsWith(".md")).map((f) => noteCandidate(notesDir, f)).filter((f): f is string => Boolean(f)).find((f) => {
     const text = readFileSync(f, "utf8");
     return text.includes(`package: ${upgrade.package}`) && text.includes(`from: ${upgrade.from}`) && text.includes(`to: ${upgrade.to}`);
   });
@@ -118,12 +137,13 @@ async function runAnalyze(args: Args): Promise<number> {
   const upgrade = { package: required(args, "package"), from: required(args, "from"), to: required(args, "to") };
   const notesPath = path.resolve(required(args, "notes"));
   const out = path.resolve(typeof args.out === "string" ? args.out : "artifacts/review");
-  const { provider, mode } = providerFrom(args);
   if (args["dry-run"] === true) {
-    const plan = dryRunPlan({ repo, upgrade, notesPath, provider });
+    providerNameFrom(args);
+    const plan = dryRunPlan({ repo, upgrade, notesPath, provider: { payload: providerPayload } });
     process.stdout.write(`${JSON.stringify(plan, null, 2)}\n`);
     return EXIT.completed;
   }
+  const { provider, mode } = providerFrom(args);
   const result = await analyzeUpgrade({ repo, upgrade, notesPath, provider, runMode: mode });
   writeReport(result.report, out);
   process.stdout.write(`${out}/report.html\n`);

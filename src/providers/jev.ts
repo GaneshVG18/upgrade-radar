@@ -62,11 +62,14 @@ export class JevProvider implements Provider {
     if (selected.choice === "insufficient_evidence" || missing >= 0.5) {
       return { disposition: "unknown", reasons: ["jev_reports_missing_required_facts"], semantic };
     }
+    if (preserves >= 0.5) {
+      return { disposition: "no_direct_evidence", reasons: ["jev_explicit_configuration_preserves_old_behavior"], semantic };
+    }
     if (selected.choice === "review" && depends >= 0.5 && preserves < 0.5) {
-      return { disposition: "review", reasons: ["jev_relevance_judgment_with_host_policy_v1"], semantic };
+      return { disposition: "review", reasons: ["jev_relevance_judgment_with_host_policy_v2"], semantic };
     }
     if (selected.choice === "not_this_change" && depends < 0.5) {
-      return { disposition: "no_direct_evidence", reasons: ["jev_negative_pair_judgment_with_host_policy_v1"], semantic };
+      return { disposition: "no_direct_evidence", reasons: ["jev_negative_pair_judgment_with_host_policy_v2"], semantic };
     }
     return { disposition: "unknown", reasons: ["jev_answers_are_contradictory_or_policy_boundary_is_ambiguous"], semantic };
   }

@@ -4,7 +4,7 @@ Normal analysis consumes local inputs only. Upgrade Radar does not fetch arbitra
 
 `--provider baseline` stays local. `--provider jev` sends a compact redacted state containing the reviewed note paragraph, exact package/version transition, selected source excerpt, resolved symbol, directly visible configuration, and missing-fact markers. Credentials are read from `TYPESAFE_API_KEY`; they are never CLI arguments, report fields, fixtures, browser assets, or cache keys.
 
-Redaction targets common API keys, bearer tokens, passwords, and private keys, but it is not a perfect secret detector. `--dry-run` prints the exact redacted payloads that would be sent so maintainers can inspect them before a live request.
+Redaction targets common API keys, bearer tokens, passwords, and private keys, but it is not a perfect secret detector. `--dry-run` prints the exact redacted payloads that would be sent so maintainers can inspect them before a live request. Dry-run is local-only and intentionally does not require `TYPESAFE_API_KEY`.
 
 Private evaluation output belongs in `.private-evals/`, which is ignored by Git. Do not attach it to releases, CI artifacts, screenshots, issues, or launch posts.
 

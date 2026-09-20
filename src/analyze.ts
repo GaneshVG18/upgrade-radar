@@ -169,7 +169,7 @@ export async function analyzeUpgrade(options: AnalyzeOptions): Promise<{ report:
   return { report, providerFailure };
 }
 
-export function dryRunPlan(options: Omit<AnalyzeOptions, "runMode">) {
+export function dryRunPlan(options: Omit<AnalyzeOptions, "runMode" | "provider"> & { provider: Pick<Provider, "payload"> }) {
   const prepared = prepare(options);
   return {
     runMode: "dry_run" as const,

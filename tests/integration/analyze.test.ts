@@ -154,6 +154,10 @@ describe("analysis integration", () => {
     const missingKey = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "analyze", "--repo", fixtureRepo(), "--package", "express", "--from", "4.21.2", "--to", "5.1.0", "--notes", path.join(fixtureRepo(), "notes.md"), "--provider", "jev"], { encoding: "utf8", env: { ...process.env, TYPESAFE_API_KEY: "" } });
     expect(missingKey.status).toBe(69);
     expect(missingKey.stderr).toMatch(/requires TYPESAFE_API_KEY/);
+    const dryRoot = fixtureRepo();
+    const dryWithoutKey = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "analyze", "--repo", dryRoot, "--package", "express", "--from", "4.21.2", "--to", "5.1.0", "--notes", path.join(dryRoot, "notes.md"), "--provider", "jev", "--dry-run"], { encoding: "utf8", env: { ...process.env, TYPESAFE_API_KEY: "" } });
+    expect(dryWithoutKey.status).toBe(0);
+    expect(JSON.parse(dryWithoutKey.stdout)).toMatchObject({ runMode: "dry_run", candidateCount: 1 });
     const invalid = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "wat"], { encoding: "utf8" });
     expect(invalid.status).toBe(64);
     const incompleteRoot = fixtureRepo();
@@ -198,6 +202,39 @@ describe("analysis integration", () => {
     expect(run.stderr).not.toMatch(/No such remote/);
     const after = execFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" });
     expect(after).toBe(before);
+  });
+
+  it("does not follow note-manifest paths outside the supplied notes directory", () => {
+    const root = fixtureRepo();
+    const base = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"express":"5.1.0"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"express":"5.1.0"}},"node_modules/express":{"version":"5.1.0"}}}\n');
+    execFileSync("git", ["add", "package.json", "package-lock.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "upgrade express"], { cwd: root });
+    const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+
+    const notesDir = path.join(root, "reviewed-notes");
+    mkdirSync(notesDir);
+    const outside = path.join(root, "outside.md");
+    const note = readFileSync(path.join(root, "notes.md"), "utf8");
+    writeFileSync(outside, note);
+    writeFileSync(path.join(notesDir, "notes-manifest.json"), JSON.stringify({ documents: [{ file: "../outside.md", package: "express", from: "4.21.2", to: "5.1.0" }] }));
+    const out = mkdtempSync(path.join(tmpdir(), "upgrade-radar-note-escape-"));
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "diff", "--repo", root, "--base", base, "--head", head, "--notes-dir", notesDir, "--provider", "baseline", "--out", out], { encoding: "utf8" });
+
+    expect(run.status).toBe(2);
+    const report = JSON.parse(readFileSync(path.join(out, "report.json"), "utf8")) as Report;
+    expect(report.noteProvenance).toEqual([]);
+    expect(report.unknownItems).toContain("missing_applicable_notes:express:4.21.2->5.1.0");
+
+    symlinkSync("../outside.md", path.join(notesDir, "escape.md"));
+    writeFileSync(path.join(notesDir, "notes-manifest.json"), JSON.stringify({ documents: [{ file: "escape.md", package: "express", from: "4.21.2", to: "5.1.0" }] }));
+    const symlinkOut = mkdtempSync(path.join(tmpdir(), "upgrade-radar-note-symlink-"));
+    const symlinkRun = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "diff", "--repo", root, "--base", base, "--head", head, "--notes-dir", notesDir, "--provider", "baseline", "--out", symlinkOut], { encoding: "utf8" });
+    expect(symlinkRun.status).toBe(2);
+    const symlinkReport = JSON.parse(readFileSync(path.join(symlinkOut, "report.json"), "utf8")) as Report;
+    expect(symlinkReport.noteProvenance).toEqual([]);
+    expect(symlinkReport.unknownItems).toContain("missing_applicable_notes:express:4.21.2->5.1.0");
   });
 
   it("keeps dependency upgrades visible and incomplete when supplied notes are missing", () => {
