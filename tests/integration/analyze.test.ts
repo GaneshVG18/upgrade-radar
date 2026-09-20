@@ -102,6 +102,44 @@ describe("analysis integration", () => {
     expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
   });
 
+  it("renders shared evidence as unique per-finding navigation targets", async () => {
+    const root = fixtureRepo();
+    const { report } = await analyzeUpgrade({ repo: root, upgrade: { package: "express", from: "4.21.2", to: "5.1.0" }, notesPath: path.join(root, "notes.md"), provider: new BaselineProvider(), runMode: "baseline" });
+    const first = report.findings[0]!;
+    const localEvidence = { ...first, code: { ...first.code }, note: { ...first.note } };
+    delete localEvidence.code.url;
+    delete localEvidence.note.url;
+    const shared: Report = {
+      ...report,
+      findings: [localEvidence, { ...localEvidence, id: `${first.id}-second` }],
+      counts: { ...report.counts, findings: 2, candidates: 2 }
+    };
+    const html = renderHtml(shared);
+    expect(html.match(/id="finding-1-note"/g)).toHaveLength(1);
+    expect(html.match(/id="finding-2-note"/g)).toHaveLength(1);
+    expect(html).toContain('href="#finding-1-note" data-evidence-target="finding-1-note"');
+    expect(html).toContain('href="#finding-2-note" data-evidence-target="finding-2-note"');
+    expect(html.match(new RegExp(`data-provenance-id="${first.note.id}"`, "g"))).toHaveLength(2);
+  });
+
+  it("separates finding unknowns from unresolved coverage and keeps run context visible", async () => {
+    const root = fixtureRepo();
+    const { report } = await analyzeUpgrade({ repo: root, upgrade: { package: "express", from: "4.21.2", to: "5.1.0" }, notesPath: path.join(root, "notes.md"), provider: new BaselineProvider(), runMode: "baseline" });
+    const withCoverageGap: Report = {
+      ...report,
+      complete: false,
+      unknownItems: ["unsupported_package_reference:express:dynamic_import:src/app.ts:1"],
+      counts: { ...report.counts, unknown: 1 }
+    };
+    const html = renderHtml(withCoverageGap);
+    expect(html).toContain("Deterministic baseline");
+    expect(html).toContain("Revision <strong>");
+    expect(html).toContain('class="generated"');
+    expect(html).toContain('<strong class="summary-value">0</strong><span class="summary-label">Unknown findings</span>');
+    expect(html).toContain('<strong class="summary-value">1</strong><span class="summary-label">Coverage unknowns</span>');
+    expect(html).toContain("Unresolved coverage above the queue remains visible while filtering.");
+  });
+
   it("uses stable CLI exit codes and never silently falls back from Jev", () => {
     const help = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "--help"], { encoding: "utf8" });
     expect(help.status).toBe(0);

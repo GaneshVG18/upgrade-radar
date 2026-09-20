@@ -11,6 +11,6 @@ const json = JSON.parse(readFileSync(path.join(out, "report.json"), "utf8"));
 assert.equal(json.runMode, "illustrative_fixture");
 assert.equal(json.schemaVersion, "upgrade-radar-report/v1");
 const html = readFileSync(path.join(out, "report.html"), "utf8");
-assert.match(html, /ILLUSTRATIVE FIXTURE/);
+assert.match(html, /Illustrative fixture · no live Jev call/);
 assert.doesNotMatch(html, /TYPESAFE_API_KEY/);
 console.log(`smoke: demo report generated at ${out}`);

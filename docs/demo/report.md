@@ -1,6 +1,6 @@
 # Upgrade Radar report
 
-Run mode: **illustrative_fixture**
+Run mode: **Illustrative fixture**
 Source revision: `authored-demo-fixtures`
 Complete: **yes**
 
@@ -11,34 +11,34 @@ Complete: **yes**
 
 ## Review queue
 
-### review: express-query-parser-default
+### Needs review: Query parser default
 
 Express 5 changes the default query parser; this handler reads a nested query object without an explicit extended-parser setting.
 
 - Code: `examples/express-app/src/app.ts:6-6` (code-31faee0c39535981)
 - Note: `examples/notes/express-5.md:13-13` (note-e682097c6bad5495)
-- Reasons: authored_fixture_decision, executable_compatibility_fixture_confirms_old_new_output_difference
+- Reasons: Authored fixture decision, Executable fixture confirms the old/new output difference
 
-### no_direct_evidence: express-query-parser-default
+### No direct evidence: Query parser default
 
 This control app explicitly selects the extended query parser, preserving the nested query shape covered by the note.
 
 - Code: `examples/express-app/src/app.ts:23-23` (code-4be7d03d5aa611bd)
 - Note: `examples/notes/express-5.md:13-13` (note-e682097c6bad5495)
-- Reasons: authored_fixture_decision, explicit_extended_query_parser_control
+- Reasons: Authored fixture decision, Explicit extended query parser preserves the reviewed behavior
 
-### review: zod-optional-default
+### Needs review: Optional field defaults
 
 Zod 4 applies a default inside an optional object field; this schema uses that exact shape and changes parsed output.
 
 - Code: `examples/zod-app/src/schema.ts:4-4` (code-3a649c7a8770b9b4)
 - Note: `examples/notes/zod-4.md:13-13` (note-c5487bae107275c9)
-- Reasons: authored_fixture_decision, executable_compatibility_fixture_confirms_old_new_output_difference
+- Reasons: Authored fixture decision, Executable fixture confirms the old/new output difference
 
 ## Coverage limitations
 
-- illustrative_fixture_decisions_are_authored_and_do_not_measure_jev_accuracy
-- bounded_static_analysis_no_full_program_dataflow_or_call_graph
-- computed_imports_dynamic_requires_and_unresolved_wrappers_are_not_followed
+- Illustrative decisions are authored and do not measure Jev accuracy
+- Analysis is bounded and does not perform full-program dataflow or call-graph tracing
+- Computed imports, dynamic requires, and unresolved wrappers are not followed
 
-This report is advisory. A negative row is only about the evaluated note/site pair and is not an upgrade compatibility guarantee.
+This report is advisory. A no-direct-evidence row applies only to one note/site pair and does not mean an upgrade is safe to merge.
