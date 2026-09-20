@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.7
+
+- Rewrote the README opening around a concrete Express 4.21.2 → 5.1.0 upgrade — the two-line diff, the four reviewed behavior families the example app touches with file and line, and the one row that fails silently rather than crashing — instead of opening on the analysis architecture. States explicitly that the bundled Express notes cover four behavior families rather than the whole migration guide, so the example cannot be read as a clean bill of health for everything else.
+- Replaced the package description, which led with an integration name rather than the problem, and expanded keywords from five terms to fifteen.
+- Package code is unchanged from `0.1.6`.
+
 ## 0.1.6
 
 - Corrected the install instructions carried inside the published npm package. The `0.1.5` tarball's README predated registry publication and still told readers the package was unpublished and to install from the Git tag. Package code is unchanged from `0.1.5`.
