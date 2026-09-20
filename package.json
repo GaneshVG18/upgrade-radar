@@ -2,7 +2,7 @@
   "name": "upgrade-radar",
   "version": "0.1.6",
   "private": false,
-  "description": "Evidence-linked dependency upgrade review for TypeScript with optional bounded Jev",
+  "description": "Which lines of your code does that dependency bump touch? Evidence-linked upgrade review for JS/TS, with explicit unknowns. Runs locally, no API key.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -16,10 +16,20 @@
     "access": "public"
   },
   "keywords": [
-    "dependency-updates",
-    "static-analysis",
-    "typescript",
+    "dependency-upgrade",
+    "breaking-changes",
+    "dependabot",
+    "renovate",
     "migration",
+    "static-analysis",
+    "code-review",
+    "dependency-updates",
+    "express",
+    "zod",
+    "npm",
+    "typescript",
+    "javascript",
+    "semver",
     "jev"
   ],
   "type": "module",
