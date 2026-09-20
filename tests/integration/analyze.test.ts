@@ -120,6 +120,9 @@ describe("analysis integration", () => {
     expect(html).toContain('href="#finding-1-note" data-evidence-target="finding-1-note"');
     expect(html).toContain('href="#finding-2-note" data-evidence-target="finding-2-note"');
     expect(html.match(new RegExp(`data-provenance-id="${first.note.id}"`, "g"))).toHaveLength(2);
+    expect(html).toContain("document.addEventListener('keydown'");
+    expect(html).toContain("event.key!=='Enter'&&event.key!==' '");
+    expect(html).toContain("details.open=!details.open");
   });
 
   it("separates finding unknowns from unresolved coverage and keeps run context visible", async () => {
