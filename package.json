@@ -69,7 +69,7 @@
     "demo": "node dist/cli.js demo --out artifacts/demo",
     "review": "node dist/cli.js review",
     "eval:live": "node scripts/eval-live.mjs",
-    "check": "npm run typecheck && npm run lint && npm test && npm run test:compat && npm run build && npm run smoke && npm run test:package",
+    "check": "npm run typecheck && npm run lint && npm test && npm run test:compat && npm run evidence:query-parser && npm run build && npm run smoke && npm run test:package",
     "evidence:query-parser": "node scripts/evidence-query-parser.mjs"
   },
   "dependencies": {

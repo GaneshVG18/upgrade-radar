@@ -38,7 +38,7 @@ Report: upgrade-radar-report/report.html
 
 Every row links to the exact line of the reviewed migration note that explains it. A `/healthz` route in the same file is not flagged, because nothing it uses changed.
 
-Three of those four crash loudly, and you would find them the first time you ran the app. The first one does not: the server boots, the tests pass, and the search endpoint quietly returns a different shape than it used to. That row is the reason this tool exists.
+Three of those four crash loudly, and you would find them the first time you ran the app. The first one does not: Express raises no error and the request still returns 200, the parsed value is simply absent. What that does to a given handler depends on how it treats `undefined` — which is exactly why it is worth a human look rather than an automatic verdict. That row is the reason this tool exists.
 
 **Those four families are what the bundled Express notes cover today — not the whole migration guide.** Upgrade Radar reports what it has reviewed evidence for and marks the rest as an explicit coverage gap. An empty review queue means it found no evidence within its supported surface. It is never a statement that an upgrade is safe to merge.
 
@@ -69,7 +69,7 @@ The control matters as much as the change: when an application selects the parse
 npx upgrade-radar demo
 ```
 
-That writes a complete authored report to `upgrade-radar-report/` with no network access, no API key, and no repository of your own. Open `report.html` to see exactly what the output looks like before you run `review` anywhere that matters.
+`npx` downloads the package itself, as any install does. After that the demo runs entirely locally: it writes a complete authored report to `upgrade-radar-report/` with no provider calls, no API key, and no repository of your own. Open `report.html` to see exactly what the output looks like before you run `review` anywhere that matters.
 
 [See a full standalone report →](https://ganeshvg18.github.io/upgrade-radar/demo/report.html)
 

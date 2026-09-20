@@ -110,6 +110,8 @@ npm run evidence:query-parser
 
 ```sh
 mkdir -p /tmp/shop-api/src && cd /tmp/shop-api && git init -b main
+git config user.email demo@example.com
+git config user.name "Upgrade Radar demo"
 cat > package.json <<'JSON'
 { "name": "shop-api", "version": "2.4.0", "type": "module",
   "dependencies": { "express": "4.21.2" } }
@@ -142,23 +144,47 @@ git add -A && git commit -qm "shop-api 2.4.0 on express 4.21.2"
 
 Start the screen capture here.
 
+Update both files through JSON rather than text substitution. The lockfile has
+three version fields that must move together, and a whitespace-sensitive `sed`
+silently misses them — which produces a manifest/lockfile disagreement and
+`0 review, 1 unknown, exit 2` instead of the finding this clip is about.
+
 ```sh
-sed -i '' 's/"express": "4.21.2"/"express": "5.1.0"/' package.json
-sed -i '' 's/"version": "4.21.2"/"version": "5.1.0"/' package-lock.json
-sed -i '' 's/"express": "4.21.2"/"express": "5.1.0"/' package-lock.json
+node -e '
+const fs = require("fs");
+const manifest = JSON.parse(fs.readFileSync("package.json", "utf8"));
+manifest.dependencies.express = "5.1.0";
+fs.writeFileSync("package.json", JSON.stringify(manifest, null, 2) + "\n");
+
+const lock = JSON.parse(fs.readFileSync("package-lock.json", "utf8"));
+lock.packages[""].dependencies.express = "5.1.0";
+lock.packages["node_modules/express"].version = "5.1.0";
+fs.writeFileSync("package-lock.json", JSON.stringify(lock, null, 2) + "\n");
+'
 git commit -qam "chore(deps): bump express from 4.21.2 to 5.1.0"
 
 npx --yes upgrade-radar review
 open upgrade-radar-report/report.html
 ```
 
+Expected: `1 upgrade(s), 1 review, 0 no-direct-evidence, 0 unknown`, exit `0`.
+
 **4. Record the control**
 
 ```sh
-sed -i '' 's|const app = express();|const app = express();\napp.set("query parser", "extended");|' src/app.ts
+node -e '
+const fs = require("fs");
+const file = "src/app.ts";
+fs.writeFileSync(file, fs.readFileSync(file, "utf8").replace(
+  "const app = express();",
+  "const app = express();\napp.set(\"query parser\", \"extended\");"
+));
+'
 git commit -qam "fix: pin the extended query parser explicitly"
 npx --yes upgrade-radar review --base HEAD~2 --head HEAD
 ```
+
+Expected: `1 upgrade(s), 0 review, 1 no-direct-evidence, 0 unknown`.
 
 **5. Capture settings**
 

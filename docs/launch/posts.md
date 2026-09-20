@@ -8,16 +8,18 @@ Rules applied to all copy: one primary action per post, no fake urgency, no unsu
 
 ## 1. Three standalone X posts
 
-### A — Concrete failure (275/280)
+### A — Concrete failure (269/280)
 
 ```text
 Express 4 → 5 changes the default query parser.
 
-?filters[color]=red used to give you req.query.filters = {color:"red"}
+Same request, both pinned versions:
 
-In Express 5 it gives you undefined.
+?filters[color]=red
+  4.21.2  req.query.filters = {color:"red"}
+  5.1.0   → undefined
 
-Server boots. Tests pass. Search quietly returns everything.
+No error raised. The value is just gone.
 
 npx upgrade-radar review finds the line that reads it.
 ```
@@ -47,11 +49,29 @@ Then it points at the line in your app that reads it.
 https://github.com/GaneshVG18/upgrade-radar
 ```
 
+### D — Minimal side-by-side (204/280)
+
+```text
+Same request. Different Express defaults.
+
+?filters[color]=red
+4.21.2: req.query.filters → {color:"red"}
+5.1.0: → undefined
+
+Upgrade Radar links affected usage to migration notes.
+
+https://github.com/GaneshVG18/upgrade-radar
+```
+
+Tightest of the four and the easiest to pair with the measured-output clip. Carries the link, which A deliberately does not.
+
 ### Recommended: **A**
 
 **Hypothesis.** The audience is not currently looking for a dependency-review tool, so a post describing the tool competes for attention it does not have. A post describing a *failure they can recognise* borrows attention from something they already worry about: an upgrade that does not crash. A crashes nothing, passes tests, and returns wrong data — which is the specific fear that makes people sit on major-version PRs.
 
 A also front-loads the concrete artifact (`req.query.filters = undefined`) rather than the product name, so a reader who scrolls past still leaves with a fact they can verify. The command appears once, at the end, as the only action.
+
+**A over D.** D is tighter and carries the link, which makes it the safer post; A withholds the link so the measured output is the only thing competing for attention, and the command is the single action. If the clip is attached, D is the better pairing because the clip already carries the visual and the post does not need to re-describe it.
 
 **What would falsify it:** if A gets impressions but no repo visits, the failure is recognisable but the jump to "and there is a tool for it" is too large — in which case B, which names the workflow moment (the Dependabot PR), is the better opener.
 
@@ -66,7 +86,7 @@ One thing I should have led with: you can see the whole output before pointing t
 
 npx upgrade-radar demo
 
-Writes a full authored report locally. No network, no key, no repo of your own needed.
+After install it runs locally: no API key, no provider calls, no repo of your own needed.
 
 https://github.com/GaneshVG18/upgrade-radar
 ```
@@ -98,9 +118,9 @@ Not a crash. Not an error. The nested keys just stop being parsed, and the value
 
 **3/**
 ```text
-That's the shape of upgrade risk that actually hurts: the server boots, the test suite passes, and an endpoint quietly returns unfiltered results.
+Nothing throws. Express raises no error and the request still returns 200 — the parsed value is just absent.
 
-The failures that crash at startup are the easy ones. You find those immediately.
+Whether that matters depends on what the handler does with undefined. The failures that crash at startup are the easy ones; you find those immediately.
 ```
 
 **4/**
@@ -136,7 +156,7 @@ The example I keep coming back to is the Express 4 -> 5 default query parser. Th
   express@4.21.2  req.query.filters = {"color":"red","size":"L"}
   express@5.1.0   req.query.filters = undefined
 
-Nothing crashes. The server boots, tests pass, and a search endpoint silently stops filtering. Upgrade Radar points at the line that reads req.query and cites the note span that explains it. If the app selects the parser explicitly, that same line comes back as no_direct_evidence with the reason, rather than as a finding.
+Nothing throws: the request still returns 200 and no error is raised, the parsed value is simply absent. What that does to a given handler depends on how it treats undefined. Upgrade Radar points at the line that reads req.query and cites the note span that explains it. If the app selects the parser explicitly, that same line comes back as no_direct_evidence with the reason, rather than as a finding.
 
 Scope is deliberately narrow and I would rather be up front about it than have you find out: first-class reviewed transitions are Express 4.21.2 -> 5.1.0, Zod 3.25.76 -> 4.1.5, Glob 8.1.0 -> 10.4.5 and Commander 11.1.0 -> 12.1.0. For any other package it resolves where you use it and reports those rows as unknown, explicitly labelled as manual starting points rather than findings. An empty review queue means it found no evidence inside its supported surface. It is not a statement that an upgrade is safe to merge.
 
@@ -172,13 +192,13 @@ Express 5 switched the default query parser from "extended" to "simple". The mig
   express@5.1.0   req.query = {"filters[color]":"red","filters[size]":"L"}
                   req.query.filters = undefined
 
-The keys survive; the nesting does not. Anything doing `const filters = req.query.filters` gets `undefined` and, if it treats that as "no filters", silently returns everything.
+The keys survive; the nesting does not. Anything doing `const filters = req.query.filters` now gets `undefined`. No error is raised, so what happens next depends entirely on how that handler treats an absent filter value.
 
 Setting `app.set("query parser", "extended")` restores the v4 result exactly, which makes it a one-line fix once you know which handlers are affected.
 
 Finding which handlers are affected is the part that does not scale by reading. I wrote a tool for that half of it: it resolves where your source reads `req.query` and links each site to the reviewed note span. If the parser is configured explicitly it reports that same line as no_direct_evidence with the reason, so the control case does not become noise.
 
-Reproduce the comparison yourself (it boots both pinned versions, no network):
+Reproduce the comparison yourself (boots both pinned versions locally, no provider calls):
   npm run evidence:query-parser
 
 Tool, if useful: https://github.com/GaneshVG18/upgrade-radar
@@ -189,32 +209,44 @@ Coverage is four reviewed transitions today; everything else is reported as expl
 
 ## 6. Replies to likely questions
 
+Each fits 280 characters with X weighting, so they work as replies on X as well as on HN, Reddit or GitHub.
+
 **On coverage** — *"Does this only work for four packages?"*
 
 ```text
-First-class reviewed coverage is four transitions: Express 4.21.2->5.1.0, Zod 3.25.76->4.1.5, Glob 8.1.0->10.4.5, Commander 11.1.0->12.1.0. For anything else it resolves where you use the package and reports those rows as unknown, labelled as manual starting points, not findings. It never reports an uncovered upgrade as clean. Adding a transition is a reviewed note plus an adapter rule plus executable old/new assertions with a negative control — docs/adding-notes.md walks through it.
+Four reviewed transitions today: Express 4.21.2→5.1.0, Zod 3.25.76→4.1.5, Glob 8.1.0→10.4.5, Commander 11.1.0→12.1.0.
+
+Anything else: it resolves where you use the package and reports those rows as unknown, labelled starting points. It never calls an uncovered upgrade clean.
 ```
 
 **On false positives** — *"How do I know it isn't just grepping for req.query?"*
 
 ```text
-Reasonably: it resolves bindings through imports rather than matching text, and it carries a negative control. If your app sets the query parser explicitly, the same line comes back as no_direct_evidence with the reason, not as a finding. That said, a "review" row is a prompt to look, not a claim that something is broken — the disposition names are deliberate. If you hit a row your code is actually safe from, that's the most useful bug report I can get.
+It resolves bindings through imports, not text matching, and carries a negative control: set the query parser explicitly and that same line returns no_direct_evidence with the reason.
+
+A "review" row means look, not broken. Wrong rows are the bug report I most want.
 ```
 
 **On privacy** — *"What leaves my machine?"*
 
 ```text
-In the default baseline mode, nothing. No network calls, no telemetry, no account. It also never executes the analyzed repository or installs its dependencies, and it will not fetch migration URLs at runtime. If you opt into the hosted adapter with an API key, it sends one redacted note/usage pair per question and `--dry-run` prints the exact payload first so you can read it before anything is sent.
+Installing downloads the package, as any install does. After that the baseline makes no provider calls, sends no telemetry and needs no account.
+
+It never executes the analyzed repo or fetches migration URLs. Opt into the hosted adapter and --dry-run prints the payload first.
 ```
 
 **On Jev** — *"So it's an LLM wrapper?"*
 
 ```text
-The default path has no model in it at all. When you do opt in, the model answers one closed relevance question about a single note/usage pair it was handed. It cannot generate filenames, line numbers, release facts, citations or patches — those come from deterministic code that owns the spans and hashes. A failed, ambiguous or low-confidence answer becomes unknown rather than a finding. If that sounds like a small role for a model, that's the intent.
+The default path has no model in it at all.
+
+If you opt in, it answers one closed relevance question about a single note/usage pair. It cannot produce filenames, line numbers, release facts or citations — deterministic code owns those. Ambiguous answers become unknown.
 ```
 
 **On existing tools** — *"Doesn't Dependabot/Renovate already do this?"*
 
 ```text
-They do a different half. Dependabot and Renovate find the upgrade and open the PR; they don't tell you which of your own lines the upgrade touches. This runs on that PR and answers that second question for the transitions it has reviewed evidence for. It's complementary — it takes the PR they opened as input and doesn't open or merge anything itself.
+They do the other half. Dependabot and Renovate find the upgrade and open the PR; they don't tell you which of your lines it touches.
+
+This runs on that PR and answers that second question, for the transitions it has reviewed evidence for.
 ```
