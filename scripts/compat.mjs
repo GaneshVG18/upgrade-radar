@@ -1,10 +1,17 @@
 import assert from "node:assert/strict";
 import http from "node:http";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import express4 from "express4";
 import express5 from "express5";
 import * as zod3 from "zod3";
 import * as zod4 from "zod4";
+
+const require = createRequire(import.meta.url);
+const glob8 = require("glob8");
+const glob10 = require("glob10");
+const commander11 = require("commander11");
+const commander12 = require("commander12");
 
 const corpus = [
   ...JSON.parse(readFileSync(new URL("../fixtures/dev/corpus.json", import.meta.url), "utf8")),
@@ -80,6 +87,14 @@ function zodRecord(z, variant) {
   }
 }
 
+function globExport(glob, variant) {
+  return variant === "positive" ? typeof glob : glob.hasMagic("*.js");
+}
+
+function commanderExport(commander, variant) {
+  return variant === "positive" ? typeof commander.option : typeof commander.program.option;
+}
+
 const runners = {
   "express-query-parser-default": (variant) => Promise.all([expressQuery(express4, variant), expressQuery(express5, variant)]),
   "express-wildcard-named": (variant) => [expressWildcard(express4, variant), expressWildcard(express5, variant)],
@@ -88,7 +103,9 @@ const runners = {
   "zod-optional-default": (variant) => [zodOptional(zod3, variant), zodOptional(zod4, variant)],
   "zod-default-short-circuit": (variant) => [zodDefault(zod3, variant), zodDefault(zod4, variant)],
   "zod-number-infinity": (variant) => [zodInfinity(zod3, variant), zodInfinity(zod4, variant)],
-  "zod-record-one-arg": (variant) => [zodRecord(zod3, variant), zodRecord(zod4, variant)]
+  "zod-record-one-arg": (variant) => [zodRecord(zod3, variant), zodRecord(zod4, variant)],
+  "glob-default-export-removed": (variant) => [globExport(glob8, variant), globExport(glob10, variant)],
+  "commander-commonjs-global-export-removed": (variant) => [commanderExport(commander11, variant), commanderExport(commander12, variant)]
 };
 
 let executed = 0;
@@ -106,6 +123,6 @@ for (const item of corpus) {
   executed += 1;
 }
 
-assert.equal(corpus.length, 48, "compatibility corpus contains 48 authored cases");
-assert.equal(new Set(corpus.map((item) => item.family)).size, 8, "corpus covers eight change families");
-console.log(`compat: ${corpus.length} cases, ${executed} executable positive/negative assertions, 8 change families`);
+assert.equal(corpus.length, 60, "compatibility corpus contains 60 authored cases");
+assert.equal(new Set(corpus.map((item) => item.family)).size, 10, "corpus covers ten change families");
+console.log(`compat: ${corpus.length} cases, ${executed} executable positive/negative assertions, 10 change families`);

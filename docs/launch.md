@@ -39,16 +39,16 @@ Coverage limits stay visible. `no_direct_evidence` only means the bounded analyz
 The default path needs no AI key:
 
 ```sh
-npx --yes --package=github:GaneshVG18/upgrade-radar#main upgrade-radar review
+npx --yes --package=github:GaneshVG18/upgrade-radar#v0.1.5 upgrade-radar review
 ```
 
-It infers the Git comparison, detects supported direct npm upgrades, uses bundled reviewed Express/Zod notes, and writes JSON + Markdown + standalone offline HTML.
+It infers the Git comparison, detects supported direct npm upgrades, uses bundled reviewed notes, and writes JSON + Markdown + standalone offline HTML.
 
 ### 5/7
 
-Preview first-class coverage is intentionally narrow: Express `4.21.2 -> 5.1.0` and Zod `3.25.76 -> 4.1.5`.
+Preview first-class coverage is intentionally narrow and transition-specific: Express `4.21.2 -> 5.1.0`, Zod `3.25.76 -> 4.1.5`, Glob `8.1.0 -> 10.4.5`, and Commander `11.1.0 -> 12.1.0`.
 
-The repo ships 48 authored compatibility cases across eight behavior families, including positive cases, negative controls, unknowns, and robustness variants. That corpus proves old/new package behavior; it is not a model benchmark.
+The repo ships 60 authored compatibility cases across ten behavior families, including positive cases, negative controls, unknowns, and robustness variants. That corpus proves the pinned old/new package behavior used by those families; it is not a model benchmark.
 
 ### 6/7
 

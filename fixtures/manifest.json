@@ -721,6 +721,186 @@
         "note": "3244cd6187204eb1150f4fc24fee18a15173b3f33a2c1a8e7748a02b13426cf9",
         "metadata": "3fde88c1e31c37774ebb15fc18e9ff112d4ad6942f89d7e8a5ef0681b62cbb4c"
       }
+    },
+    {
+      "id": "glob_default_export_removed_positive",
+      "fixturePath": "fixtures/dev/cases/glob_default_export_removed_positive",
+      "package": "glob",
+      "versions": {
+        "old": "8.1.0",
+        "new": "10.4.5"
+      },
+      "sourceUrl": "https://github.com/isaacs/node-glob/blob/main/changelog.md",
+      "hashes": {
+        "source": "e84c7a2b2c3bf177ba006e6c38824a54a4f36a24cb356b46bb323932eccfc187",
+        "note": "fed01871ec19825eb4e1c79505e5c9df935c02ef8b1f6dae20a3f222f304f554",
+        "metadata": "42427b306637edf3dcde4bb70a95dda350576e5dc6b3b1fd93e58b0f894e4f13"
+      }
+    },
+    {
+      "id": "glob_default_export_removed_negative",
+      "fixturePath": "fixtures/dev/cases/glob_default_export_removed_negative",
+      "package": "glob",
+      "versions": {
+        "old": "8.1.0",
+        "new": "10.4.5"
+      },
+      "sourceUrl": "https://github.com/isaacs/node-glob/blob/main/changelog.md",
+      "hashes": {
+        "source": "d1f7388e8f4a41ab3cd1d2906626684dd14cbb95b059f7a2e464d703d723b856",
+        "note": "fed01871ec19825eb4e1c79505e5c9df935c02ef8b1f6dae20a3f222f304f554",
+        "metadata": "b478142dbccaae7d5ec7e6c8f4f1b3ce155fd57acb82c523b99d38f8fb3afafb"
+      }
+    },
+    {
+      "id": "glob_default_export_removed_unknown",
+      "fixturePath": "fixtures/dev/cases/glob_default_export_removed_unknown",
+      "package": "glob",
+      "versions": {
+        "old": "8.1.0",
+        "new": "10.4.5"
+      },
+      "sourceUrl": "https://github.com/isaacs/node-glob/blob/main/changelog.md",
+      "hashes": {
+        "source": "1911ebc000e2a5b4cdeb1da3766d907c23015d23d351ddb308772c908361f427",
+        "note": "fed01871ec19825eb4e1c79505e5c9df935c02ef8b1f6dae20a3f222f304f554",
+        "metadata": "fbb7af477c8fc03e6f1569916b4212828850b7afd7817ec815cf2f4afbb0f436"
+      }
+    },
+    {
+      "id": "glob_default_export_removed_robust_alias",
+      "fixturePath": "fixtures/dev/cases/glob_default_export_removed_robust_alias",
+      "package": "glob",
+      "versions": {
+        "old": "8.1.0",
+        "new": "10.4.5"
+      },
+      "sourceUrl": "https://github.com/isaacs/node-glob/blob/main/changelog.md",
+      "hashes": {
+        "source": "160d2ae2ea78e6efdbe6c9b4a10cb1f65bae7aef21cf79df88fc3b9385d44650",
+        "note": "fed01871ec19825eb4e1c79505e5c9df935c02ef8b1f6dae20a3f222f304f554",
+        "metadata": "f560246c47937eb1defdeb2aff69e87f78dd51263c70f78ff62792b6a13d75a3"
+      }
+    },
+    {
+      "id": "glob_default_export_removed_robust_cjs",
+      "fixturePath": "fixtures/dev/cases/glob_default_export_removed_robust_cjs",
+      "package": "glob",
+      "versions": {
+        "old": "8.1.0",
+        "new": "10.4.5"
+      },
+      "sourceUrl": "https://github.com/isaacs/node-glob/blob/main/changelog.md",
+      "hashes": {
+        "source": "0c3f442612661bf706f087ea281be9e5bfc57dc220f9a6f7a54b543cc0fdb195",
+        "note": "fed01871ec19825eb4e1c79505e5c9df935c02ef8b1f6dae20a3f222f304f554",
+        "metadata": "eebcf0b82275bd05159af48f3db941ea93148137c9a5869c3af732aa0df62096"
+      }
+    },
+    {
+      "id": "glob_default_export_removed_robust_control",
+      "fixturePath": "fixtures/dev/cases/glob_default_export_removed_robust_control",
+      "package": "glob",
+      "versions": {
+        "old": "8.1.0",
+        "new": "10.4.5"
+      },
+      "sourceUrl": "https://github.com/isaacs/node-glob/blob/main/changelog.md",
+      "hashes": {
+        "source": "6c76825404b1847c36c123179cd5b7f1f74993652e46ece4129df3f3868f9f9f",
+        "note": "fed01871ec19825eb4e1c79505e5c9df935c02ef8b1f6dae20a3f222f304f554",
+        "metadata": "9ab2eba16cefddf673f008e1ef8c601f53c3800048ea50b03117a62b9c68b4da"
+      }
+    },
+    {
+      "id": "commander_commonjs_global_export_removed_positive",
+      "fixturePath": "fixtures/dev/cases/commander_commonjs_global_export_removed_positive",
+      "package": "commander",
+      "versions": {
+        "old": "11.1.0",
+        "new": "12.1.0"
+      },
+      "sourceUrl": "https://github.com/tj/commander.js/blob/master/CHANGELOG.md",
+      "hashes": {
+        "source": "5007ec379928e6d22cbc386a5c6c700aacd67c8197fa79243cfaf48f468ae9d9",
+        "note": "ded375b3cb5f0bcfeece58a3ccd7eb9826742b19fddbdd8c094989c1cfe302c4",
+        "metadata": "4f58a69149b622a0906829d29394266573bb0d3a41935bfbf96f4ba69d1f86ea"
+      }
+    },
+    {
+      "id": "commander_commonjs_global_export_removed_negative",
+      "fixturePath": "fixtures/dev/cases/commander_commonjs_global_export_removed_negative",
+      "package": "commander",
+      "versions": {
+        "old": "11.1.0",
+        "new": "12.1.0"
+      },
+      "sourceUrl": "https://github.com/tj/commander.js/blob/master/CHANGELOG.md",
+      "hashes": {
+        "source": "e39c1cb5462d3e6938ac0f2746c2b7a116d879bffd9534417899f3d273bbcad1",
+        "note": "ded375b3cb5f0bcfeece58a3ccd7eb9826742b19fddbdd8c094989c1cfe302c4",
+        "metadata": "a8c02584f885ce0aa17505dbf645ce5bb2874de26124893777b7b912218221ee"
+      }
+    },
+    {
+      "id": "commander_commonjs_global_export_removed_unknown",
+      "fixturePath": "fixtures/dev/cases/commander_commonjs_global_export_removed_unknown",
+      "package": "commander",
+      "versions": {
+        "old": "11.1.0",
+        "new": "12.1.0"
+      },
+      "sourceUrl": "https://github.com/tj/commander.js/blob/master/CHANGELOG.md",
+      "hashes": {
+        "source": "cb8a320d8eed9c934a6b7a44bc5b30770dc88a2d0e4d0d49d3d648fbdbc4574b",
+        "note": "ded375b3cb5f0bcfeece58a3ccd7eb9826742b19fddbdd8c094989c1cfe302c4",
+        "metadata": "16319837a7a1e7442bfda83d02e0dd76660ef455f8dc936f92efce94fad2a480"
+      }
+    },
+    {
+      "id": "commander_commonjs_global_export_removed_robust_alias",
+      "fixturePath": "fixtures/dev/cases/commander_commonjs_global_export_removed_robust_alias",
+      "package": "commander",
+      "versions": {
+        "old": "11.1.0",
+        "new": "12.1.0"
+      },
+      "sourceUrl": "https://github.com/tj/commander.js/blob/master/CHANGELOG.md",
+      "hashes": {
+        "source": "b0ea92107022e73fd7ca85d3a73a0e5a29f4f9b60f97819a14440747745fe71d",
+        "note": "ded375b3cb5f0bcfeece58a3ccd7eb9826742b19fddbdd8c094989c1cfe302c4",
+        "metadata": "0adb5b88b53be33a180b3bca7522248c95bdb4054bb3c0037e2621268fa615e7"
+      }
+    },
+    {
+      "id": "commander_commonjs_global_export_removed_robust_cjs",
+      "fixturePath": "fixtures/dev/cases/commander_commonjs_global_export_removed_robust_cjs",
+      "package": "commander",
+      "versions": {
+        "old": "11.1.0",
+        "new": "12.1.0"
+      },
+      "sourceUrl": "https://github.com/tj/commander.js/blob/master/CHANGELOG.md",
+      "hashes": {
+        "source": "5007ec379928e6d22cbc386a5c6c700aacd67c8197fa79243cfaf48f468ae9d9",
+        "note": "ded375b3cb5f0bcfeece58a3ccd7eb9826742b19fddbdd8c094989c1cfe302c4",
+        "metadata": "f3267f22a79254e50ee3728a1f676218269fb931aa9230c1283f5357d9d8a522"
+      }
+    },
+    {
+      "id": "commander_commonjs_global_export_removed_robust_control",
+      "fixturePath": "fixtures/dev/cases/commander_commonjs_global_export_removed_robust_control",
+      "package": "commander",
+      "versions": {
+        "old": "11.1.0",
+        "new": "12.1.0"
+      },
+      "sourceUrl": "https://github.com/tj/commander.js/blob/master/CHANGELOG.md",
+      "hashes": {
+        "source": "683e95e7249aa0906b80a6ae3075de3da31ea6b0c05ede1e2d38f508cba64be6",
+        "note": "ded375b3cb5f0bcfeece58a3ccd7eb9826742b19fddbdd8c094989c1cfe302c4",
+        "metadata": "07b96669817d90944f2e69d070e75a0d9a02ccbbb9cb04c3609c1875a96d6d76"
+      }
     }
   ]
 }

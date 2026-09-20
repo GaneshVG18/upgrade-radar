@@ -1,8 +1,13 @@
 # Upgrade Radar
 
+[![CI](https://github.com/GaneshVG18/upgrade-radar/actions/workflows/ci.yml/badge.svg)](https://github.com/GaneshVG18/upgrade-radar/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 **The dependency PR changed two lines. Which application behavior changed?**
 
 Upgrade Radar connects reviewed dependency migration notes to the unchanged application code that actually uses the affected package behavior. It returns a short evidence-linked review queue with exact code and note spans, explicit unknowns, and coverage limitations.
+
+[See the standalone illustrative report →](https://ganeshvg18.github.io/upgrade-radar/demo/report.html)
 
 ![Illustrative Upgrade Radar report](docs/demo/report.png)
 
@@ -22,13 +27,13 @@ For each supported upgrade it gives you:
 
 ## Run it
 
-From the npm project you want to review, on Node 24:
+From the npm project you want to review, on Node 24 or newer:
 
 ```sh
-npx --yes --package=github:GaneshVG18/upgrade-radar#main upgrade-radar review
+npx --yes upgrade-radar@0.1.5 review
 ```
 
-That is the normal path. `review` uses the current repository and `HEAD`, infers the comparison base from a local `main`/`master` merge-base (falling back to `HEAD~1`), uses the bundled reviewed Express/Zod migration notes, and runs the deterministic no-key baseline. It writes `upgrade-radar-report/{report.html,report.md,report.json}`. No TypeSafe account or API key is required.
+That is the normal path. `review` uses the current repository and `HEAD`, infers the comparison base from a local `main`/`master` merge-base (falling back to `HEAD~1`), uses the bundled reviewed migration notes, and runs the deterministic no-key baseline. It writes `upgrade-radar-report/{report.html,report.md,report.json}`. No TypeSafe account or API key is required.
 
 Example terminal summary:
 
@@ -37,9 +42,15 @@ Upgrade Radar: 1 upgrade(s), 1 review, 0 no-direct-evidence, 0 unknown.
 Report: /path/to/project/upgrade-radar-report/report.html
 ```
 
-The preview is distributed from GitHub rather than the npm registry. For reproducible automation, pin the Git dependency or Action to a reviewed commit/tag instead of a moving branch.
+For a reproducible Git-pinned CLI run:
 
-If there are no direct dependency version changes in the inferred comparison, the command succeeds with an empty report instead of pretending there was work to review. If an upgrade is detected but bundled notes or source coverage are insufficient, the report is incomplete and exits `2` rather than looking clean.
+```sh
+npx --yes --package=github:GaneshVG18/upgrade-radar#v0.1.5 upgrade-radar review
+```
+
+For CI, pin the composite Action to the release tag shown below.
+
+If there are no direct dependency version changes in the inferred comparison, the command succeeds with an empty report. If an upgrade is detected but reviewed notes or source coverage are insufficient, the report is incomplete and exits `2`. For packages without applicable reviewed notes, Upgrade Radar still lists resolved usage sites as manual review starting points; those rows are `unknown`, never findings of breakage.
 
 To try the authored demo instead of analyzing a repository:
 
@@ -102,7 +113,7 @@ Exit codes are stable: `0` completed advisory report, `2` incomplete report, `64
 
 ## Supported scope
 
-First-class v0.1 coverage is JavaScript/TypeScript, npm root projects, direct dependencies, package-lock v2/v3, Express **4.21.2 → 5.1.0**, and Zod **3.25.76 → 4.1.5**. Other packages can receive generic usage suggestions without inheriting those coverage claims.
+First-class v0.1 coverage is JavaScript/TypeScript, npm root projects, direct dependencies, package-lock v2/v3, and these exact reviewed transitions: Express **4.21.2 → 5.1.0**, Zod **3.25.76 → 4.1.5**, Glob **8.1.0 → 10.4.5**, and Commander **11.1.0 → 12.1.0**. Other packages can receive generic resolved-usage starting points without inheriting those coverage claims. In deterministic baseline mode, generic-adapter rows stay `unknown`; with user-supplied reviewed notes, live Jev mode may judge the bounded note/usage pairs.
 
 Unsupported or bounded areas stay visible as limitations/unknowns: workspaces, non-npm package managers, transitive-only upgrades, arbitrary runtime-computed package references, unresolved wrappers, full call-graph/dataflow reasoning, incomplete notes, source/candidate caps, and unsupported lockfiles. Dynamic imports and resolvable computed package references are surfaced as explicit unknowns rather than treated as evidence of safety.
 
@@ -116,16 +127,16 @@ Code owns package identity, versions, source/note spans, hashes, redaction, caps
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0
-- uses: GaneshVG18/upgrade-radar@main
+- uses: GaneshVG18/upgrade-radar@v0.1.5
 ```
 
-The composite Action needs only read access to the checkout. With full Git history available, it infers refs the same way as the CLI. `base`, `head`, `notes-dir`, and `provider` are optional overrides. Bundled notes and the no-key baseline are the defaults. It writes the report to the job summary and uploads an artifact. During the preview, `@main` is the moving convenience ref; pin a reviewed commit or release tag for production CI. Do not expose provider keys to untrusted fork PR jobs. See [privacy](docs/privacy.md) for an opt-in trusted live-mode example.
+The composite Action needs only read access to the checkout. With full Git history available, it infers refs the same way as the CLI. `base`, `head`, `notes-dir`, and `provider` are optional overrides. Bundled notes and the no-key baseline are the defaults. It writes the report to the job summary and uploads an artifact. Do not expose provider keys to untrusted fork PR jobs. See [privacy](docs/privacy.md) for an opt-in trusted live-mode example.
 
 ## Evidence and evaluation
 
-`npm run test:compat` executes 48 authored cases across eight documented Express/Zod change families. Every case has an isolated fixture directory with source, reviewed note, case metadata, exact package versions, upstream provenance URL, and SHA-256 entries in `fixtures/manifest.json`. Positive and negative labels come from pinned old/new package behavior; unknown cases state the missing evidence. Robustness variants are marked and are not treated as independent samples. Live Jev evaluation output is intentionally private and is not published as a benchmark.
+`npm run test:compat` executes 60 authored cases across ten documented change families for Express, Zod, Glob, and Commander. Every case has an isolated fixture directory with source, reviewed note, case metadata, exact package versions, upstream provenance URL, and SHA-256 entries in `fixtures/manifest.json`. Positive and negative labels come from pinned old/new package behavior; unknown cases state the missing evidence. Robustness variants are marked and are not treated as independent samples. Live Jev evaluation output is intentionally private and is not published as a benchmark.
 
-More detail: [architecture](docs/architecture.md), [limitations](docs/limitations.md), [evaluation](docs/evaluation.md), [privacy](docs/privacy.md), and [comparison](docs/comparison.md).
+More detail: [architecture](docs/architecture.md), [adding reviewed notes](docs/adding-notes.md), [limitations](docs/limitations.md), [evaluation](docs/evaluation.md), [privacy](docs/privacy.md), and [comparison](docs/comparison.md).
 
 ## Trust model
 

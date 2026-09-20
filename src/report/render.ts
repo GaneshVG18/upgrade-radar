@@ -17,6 +17,7 @@ const modeLabels: Record<RunMode, string> = {
 };
 
 const familyLabels: Record<string, string> = {
+  generic: "Generic usage starting point",
   "express-query-parser-default": "Query parser default",
   "express-wildcard-named": "Named wildcard routes",
   "express-app-del-removed": "Removed app.del method",
@@ -50,7 +51,9 @@ const messageLabels: Record<string, string> = {
   source_line_links_unavailable_without_supported_origin_remote: "Source line links are unavailable without a supported origin remote",
   source_line_links_unavailable_for_dirty_worktree: "Source line links are unavailable for a dirty working tree",
   notes_manifest_missing_or_hash_provenance_mismatch: "Notes provenance is unverified because the manifest is missing, malformed, or has a hash mismatch",
-  generic_library_mode_has_no_express_or_zod_adapter_coverage_claim: "Generic library mode does not inherit Express or Zod adapter coverage claims"
+  generic_library_mode_has_no_express_or_zod_adapter_coverage_claim: "Generic library mode does not inherit Express or Zod adapter coverage claims",
+  generic_adapter_requires_live_jev_for_relevance_judgment: "The deterministic baseline does not make relevance judgments for generic-adapter rows",
+  manual_review_starting_point_without_reviewed_note: "This row is a manual review starting point because no reviewed migration note was supplied"
 };
 
 function humanizeIdentifier(value: string): string {
@@ -61,6 +64,10 @@ function humanizeIdentifier(value: string): string {
   if (value.startsWith("missing_applicable_notes:")) {
     const [, packageName = "package", transition = "requested transition"] = value.split(":");
     return `No applicable reviewed notes were supplied for ${packageName} ${transition.replace("->", " → ")}`;
+  }
+  if (value.startsWith("dependency_diff_manifest_lock_disagreement:")) {
+    const [, packageName = "package", transition = "declared transition", locked = "locked version unknown"] = value.split(":");
+    return `package.json declares ${packageName} ${transition.replace("->", " → ")} while the lockfile stayed at ${locked.replace("locked@", "")}`;
   }
   if (value.startsWith("unsupported_package_reference:")) {
     const [, packageName = "package", kind = "reference", source = "unknown location", line = ""] = value.split(":");
@@ -87,7 +94,8 @@ export function validateReport(report: Report): void {
   if (report.schemaVersion !== "upgrade-radar-report/v1") throw new Error("Unsupported report schema");
   if (!Array.isArray(report.findings) || !Array.isArray(report.coverageLimitations) || !Array.isArray(report.unknownItems)) throw new Error("Malformed report arrays");
   for (const finding of report.findings) {
-    if (!finding.code.id || !finding.note.id || !finding.code.spanHash || !finding.note.spanHash) throw new Error("Finding is missing evidence provenance");
+    if (!finding.code.id || !finding.code.spanHash) throw new Error("Finding is missing code evidence provenance");
+    if (finding.note && (!finding.note.id || !finding.note.spanHash)) throw new Error("Finding is missing note evidence provenance");
     if (!new Set(["review", "no_direct_evidence", "unknown"]).has(finding.disposition)) throw new Error("Invalid disposition");
   }
 }
@@ -117,36 +125,46 @@ function renderFinding(finding: Finding, index: number): string {
   const detailsId = `${rowId}-evidence`;
   const noteId = `${rowId}-note`;
   const codeId = `${rowId}-code`;
-  const search = [finding.package, finding.changeFamily, findingTitle(finding), finding.relationship, finding.code.path, finding.note.path, ...finding.reasons].join(" ").toLowerCase();
+  const search = [finding.package, finding.changeFamily, findingTitle(finding), finding.relationship, finding.code.path, finding.note?.path ?? "", finding.resolvedSymbol ?? "", finding.bindingPath ?? "", ...finding.reasons].join(" ").toLowerCase();
   const reasons = finding.reasons.map((reason) => `<li title="${escapeHtml(reason)}">${escapeHtml(humanizeIdentifier(reason))}</li>`).join("");
+  const coverage = finding.coverage ? `<span class="source-kind">${escapeHtml(finding.coverage === "generic-adapter" ? "Generic adapter" : "First-class adapter")}</span>` : "";
+  const coverageLine = coverage ? `        ${coverage}\n` : "";
+  const noteSource = finding.note
+    ? `<span><span class="source-kind">Release note</span>${evidenceLink(finding.note, noteId, "Release note")}</span>`
+    : '<span><span class="source-kind">Release note</span><span>Not supplied</span></span>';
+  const notePanel = finding.note ? `<section class="evidence-panel evidence-panel--note" id="${noteId}" tabindex="-1" data-provenance-id="${escapeHtml(finding.note.id)}">
+          <div class="evidence-kicker">Reviewed release note</div>
+          <h4>${escapeHtml(findingTitle(finding))}</h4>
+          <pre><code>${excerptLines(finding.note)}</code></pre>
+        </section>` : "";
+  const usageFacts = [
+    finding.resolvedSymbol ? `<li>Resolved symbol: <code>${escapeHtml(finding.resolvedSymbol)}</code></li>` : "",
+    finding.bindingPath ? `<li>Binding path: <code>${escapeHtml(finding.bindingPath)}</code></li>` : ""
+  ].filter(Boolean).join("");
   return `<article class="finding finding--${escapeHtml(finding.disposition)}" id="${rowId}" data-disposition="${escapeHtml(finding.disposition)}" data-package="${escapeHtml(finding.package)}" data-family="${escapeHtml(finding.changeFamily)}" data-search="${escapeHtml(search)}" data-finding-id="${escapeHtml(finding.id)}">
     <header class="finding-header">
       <div class="finding-heading">
         <span class="package-mark">${escapeHtml(finding.package)}</span>
         <h3>${escapeHtml(findingTitle(finding))}</h3>
-      </div>
+${coverageLine}      </div>
       <span class="status status--${escapeHtml(finding.disposition)}">${escapeHtml(dispositionLabels[finding.disposition])}</span>
     </header>
     <p class="relationship">${escapeHtml(finding.relationship)}</p>
     <div class="finding-sources" aria-label="Evidence locations">
       <span><span class="source-kind">Application</span>${evidenceLink(finding.code, codeId, "Application code")}</span>
-      <span><span class="source-kind">Release note</span>${evidenceLink(finding.note, noteId, "Release note")}</span>
+      ${noteSource}
     </div>
     <details id="${detailsId}">
       <summary><span>Inspect evidence</span><span class="summary-hint" aria-hidden="true">note ↔ code</span></summary>
       <div class="evidence-grid">
-        <section class="evidence-panel evidence-panel--note" id="${noteId}" tabindex="-1" data-provenance-id="${escapeHtml(finding.note.id)}">
-          <div class="evidence-kicker">Reviewed release note</div>
-          <h4>${escapeHtml(findingTitle(finding))}</h4>
-          <pre><code>${excerptLines(finding.note)}</code></pre>
-        </section>
+        ${notePanel}
         <section class="evidence-panel evidence-panel--code" id="${codeId}" tabindex="-1" data-provenance-id="${escapeHtml(finding.code.id)}">
           <div class="evidence-kicker">Application usage</div>
           <h4>${escapeHtml(finding.code.path)}</h4>
           <pre><code>${excerptLines(finding.code)}</code></pre>
         </section>
       </div>
-      <div class="reason-block"><h4>Why this row appears</h4><ul>${reasons}</ul></div>
+      <div class="reason-block"><h4>Why this row appears</h4><ul>${usageFacts}${reasons}</ul></div>
     </details>
   </article>`;
 }
@@ -174,7 +192,10 @@ export function renderMarkdown(report: Report): string {
       finding.relationship,
       "",
       `- Code: \`${finding.code.path}:${finding.code.startLine}-${finding.code.endLine}\` (${finding.code.id})`,
-      `- Note: \`${finding.note.path}:${finding.note.startLine}-${finding.note.endLine}\` (${finding.note.id})`,
+      finding.note ? `- Note: \`${finding.note.path}:${finding.note.startLine}-${finding.note.endLine}\` (${finding.note.id})` : "- Note: not supplied; this row is a manual review starting point",
+      ...(finding.coverage ? [`- Coverage: \`${finding.coverage}\``] : []),
+      ...(finding.resolvedSymbol ? [`- Resolved symbol: \`${finding.resolvedSymbol}\``] : []),
+      ...(finding.bindingPath ? [`- Binding path: \`${finding.bindingPath}\``] : []),
       `- Reasons: ${finding.reasons.map(humanizeIdentifier).join(", ")}`,
       ""
     );

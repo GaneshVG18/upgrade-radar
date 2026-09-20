@@ -3,7 +3,14 @@ import ts from "typescript";
 import type { EvidenceSpan, SourceFile, UsageSite } from "../types.js";
 import { lineRange, sha256, shortHash } from "../core/util.js";
 
-type Binding = { symbol: string };
+type BindingKind = "esm-default" | "esm-namespace" | "esm-named" | "commonjs-root" | "commonjs-named";
+type Binding = { symbol: string; bindingPath: string; kind: BindingKind };
+
+const FIRST_CLASS_PACKAGES = new Set(["commander", "express", "glob", "zod"]);
+
+export function isFirstClassPackage(packageName: string): boolean {
+  return FIRST_CLASS_PACKAGES.has(packageName);
+}
 
 function scriptKind(file: string): ts.ScriptKind {
   if (file.endsWith(".tsx")) return ts.ScriptKind.TSX;
@@ -41,18 +48,21 @@ function directBindings(sf: ts.SourceFile, target: string): Map<string, Binding>
   const out = new Map<string, Binding>();
   sf.forEachChild((node) => {
     if (ts.isImportDeclaration(node) && node.importClause && moduleText(node.moduleSpecifier) === target) {
-      if (node.importClause.name) out.set(node.importClause.name.text, { symbol: "default" });
+      if (node.importClause.name) out.set(node.importClause.name.text, { symbol: "default", bindingPath: `${target} -> default as ${node.importClause.name.text}`, kind: "esm-default" });
       const named = node.importClause.namedBindings;
-      if (named && ts.isNamespaceImport(named)) out.set(named.name.text, { symbol: "*" });
+      if (named && ts.isNamespaceImport(named)) out.set(named.name.text, { symbol: "*", bindingPath: `${target} -> * as ${named.name.text}`, kind: "esm-namespace" });
       if (named && ts.isNamedImports(named)) {
-        for (const item of named.elements) out.set(item.name.text, { symbol: item.propertyName?.text ?? item.name.text });
+        for (const item of named.elements) {
+          const symbol = item.propertyName?.text ?? item.name.text;
+          out.set(item.name.text, { symbol, bindingPath: `${target} -> ${symbol} as ${item.name.text}`, kind: symbol === "default" ? "esm-default" : "esm-named" });
+        }
       }
     }
     if (ts.isImportEqualsDeclaration(node)
       && ts.isExternalModuleReference(node.moduleReference)
       && node.moduleReference.expression
       && moduleText(node.moduleReference.expression) === target) {
-      out.set(node.name.text, { symbol: "*" });
+      out.set(node.name.text, { symbol: "*", bindingPath: `${target} -> * as ${node.name.text}`, kind: "commonjs-root" });
     }
     if (ts.isVariableStatement(node)) {
       for (const decl of node.declarationList.declarations) {
@@ -60,10 +70,13 @@ function directBindings(sf: ts.SourceFile, target: string): Map<string, Binding>
         const call = decl.initializer;
         if (!ts.isIdentifier(call.expression) || call.expression.text !== "require") continue;
         if (call.arguments.length !== 1 || !ts.isStringLiteral(call.arguments[0]!) || call.arguments[0]!.text !== target) continue;
-        if (ts.isIdentifier(decl.name)) out.set(decl.name.text, { symbol: "*" });
+        if (ts.isIdentifier(decl.name)) out.set(decl.name.text, { symbol: "*", bindingPath: `${target} -> * as ${decl.name.text}`, kind: "commonjs-root" });
         if (ts.isObjectBindingPattern(decl.name)) {
           for (const element of decl.name.elements) {
-            if (ts.isIdentifier(element.name)) out.set(element.name.text, { symbol: element.propertyName && ts.isIdentifier(element.propertyName) ? element.propertyName.text : element.name.text });
+            if (ts.isIdentifier(element.name)) {
+              const symbol = element.propertyName && ts.isIdentifier(element.propertyName) ? element.propertyName.text : element.name.text;
+              out.set(element.name.text, { symbol, bindingPath: `${target} -> ${symbol} as ${element.name.text}`, kind: "commonjs-named" });
+            }
           }
         }
       }
@@ -80,10 +93,11 @@ function exportedBindings(files: SourceFile[], target: string): Map<string, Map<
     sf.forEachChild((node) => {
       if (!ts.isExportDeclaration(node) || !node.moduleSpecifier || moduleText(node.moduleSpecifier) !== target) return;
       if (!node.exportClause) {
-        exports.set("*", { symbol: "*" });
+        exports.set("*", { symbol: "*", bindingPath: `${target} -> *`, kind: "esm-namespace" });
       } else if (ts.isNamedExports(node.exportClause)) {
         for (const item of node.exportClause.elements) {
-          exports.set(item.name.text, { symbol: item.propertyName?.text ?? item.name.text });
+          const symbol = item.propertyName?.text ?? item.name.text;
+          exports.set(item.name.text, { symbol, bindingPath: `${target} -> ${symbol}`, kind: symbol === "default" ? "esm-default" : "esm-named" });
         }
       }
     });
@@ -117,14 +131,14 @@ function bindingsForFile(file: SourceFile, files: SourceFile[], target: string, 
     if (!available) return;
     if (node.importClause.name) {
       const binding = available.get("default");
-      if (binding) out.set(node.importClause.name.text, binding);
+      if (binding) out.set(node.importClause.name.text, { ...binding, bindingPath: `${binding.bindingPath} -> ${resolved} -> default as ${node.importClause.name.text}` });
     }
     const named = node.importClause.namedBindings;
     if (named && ts.isNamedImports(named)) {
       for (const item of named.elements) {
         const imported = item.propertyName?.text ?? item.name.text;
         const binding = available.get(imported) ?? available.get("*");
-        if (binding) out.set(item.name.text, binding);
+        if (binding) out.set(item.name.text, { ...binding, bindingPath: `${binding.bindingPath} -> ${resolved} -> ${imported} as ${item.name.text}` });
       }
     }
   });
@@ -371,6 +385,90 @@ function zodSites(file: SourceFile, sf: ts.SourceFile, bindings: Map<string, Bin
   return sites;
 }
 
+function globSites(file: SourceFile, sf: ts.SourceFile, bindings: Map<string, Binding>): UsageSite[] {
+  const sites: UsageSite[] = [];
+  const visit = (node: ts.Node): void => {
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
+      const binding = bindings.get(node.expression.text);
+      if (binding && (binding.kind === "commonjs-root" || binding.kind === "esm-default")) {
+        addSite(
+          sites,
+          file,
+          sf,
+          node,
+          "glob",
+          "glob-default-export-removed",
+          node.expression.text,
+          { resolvedSymbol: binding.symbol, bindingPath: binding.bindingPath }
+        );
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sf);
+  return sites;
+}
+
+const COMMANDER_GLOBAL_METHODS = new Set([
+  "action",
+  "addArgument",
+  "addCommand",
+  "addHelpCommand",
+  "addHelpText",
+  "addOption",
+  "allowExcessArguments",
+  "allowUnknownOption",
+  "argument",
+  "arguments",
+  "command",
+  "configureHelp",
+  "configureOutput",
+  "description",
+  "enablePositionalOptions",
+  "exitOverride",
+  "helpOption",
+  "hook",
+  "name",
+  "option",
+  "parse",
+  "parseAsync",
+  "passThroughOptions",
+  "requiredOption",
+  "showHelpAfterError",
+  "showSuggestionAfterError",
+  "storeOptionsAsProperties",
+  "summary",
+  "usage",
+  "version"
+]);
+
+function commanderSites(file: SourceFile, sf: ts.SourceFile, bindings: Map<string, Binding>): UsageSite[] {
+  const sites: UsageSite[] = [];
+  const visit = (node: ts.Node): void => {
+    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)
+      && ts.isIdentifier(node.expression.expression)) {
+      const root = node.expression.expression.text;
+      const binding = bindings.get(root);
+      const method = node.expression.name.text;
+      if (binding?.kind === "commonjs-root" && COMMANDER_GLOBAL_METHODS.has(method)) {
+        addSite(
+          sites,
+          file,
+          sf,
+          node,
+          "commander",
+          "commander-commonjs-global-export-removed",
+          `${root}.${method}`,
+          { resolvedSymbol: `${root}.${method}`, bindingPath: `${binding.bindingPath} -> ${root}.${method}` }
+        );
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sf);
+  return sites;
+}
+
 export function analyzeUsageSites(files: SourceFile[], targetPackage: string): UsageSite[] {
   const exports = exportedBindings(files, targetPackage);
   const sites: UsageSite[] = [];
@@ -380,11 +478,23 @@ export function analyzeUsageSites(files: SourceFile[], targetPackage: string): U
     if (bindings.size === 0) continue;
     if (targetPackage === "express") sites.push(...expressSites(file, sf, bindings));
     else if (targetPackage === "zod") sites.push(...zodSites(file, sf, bindings));
+    else if (targetPackage === "glob") sites.push(...globSites(file, sf, bindings));
+    else if (targetPackage === "commander") sites.push(...commanderSites(file, sf, bindings));
     else {
       const visit = (node: ts.Node): void => {
         if (ts.isIdentifier(node) && bindings.has(node.text)) {
           if (ts.isImportClause(node.parent) || ts.isImportSpecifier(node.parent) || ts.isNamespaceImport(node.parent)) return;
-          addSite(sites, file, sf, node, targetPackage, "generic", bindings.get(node.text)?.symbol ?? node.text);
+          const binding = bindings.get(node.text)!;
+          let usageNode: ts.Node = node;
+          let resolvedSymbol = binding.symbol;
+          let bindingPath = binding.bindingPath;
+          if (ts.isPropertyAccessExpression(node.parent) && node.parent.expression === node) {
+            usageNode = node.parent;
+            const property = node.parent.name.text;
+            resolvedSymbol = binding.symbol === "*" || binding.symbol === "default" ? `${node.text}.${property}` : `${binding.symbol}.${property}`;
+            bindingPath = `${bindingPath} -> ${node.text}.${property}`;
+          }
+          addSite(sites, file, sf, usageNode, targetPackage, "generic", resolvedSymbol, { resolvedSymbol, bindingPath });
         }
         ts.forEachChild(node, visit);
       };

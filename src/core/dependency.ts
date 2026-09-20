@@ -84,3 +84,14 @@ export function directDependenciesFromText(manifestText: string): Record<string,
     ...manifest.optionalDependencies
   };
 }
+
+export function manifestLockDisagreement(
+  packageName: string,
+  manifestFrom: string,
+  manifestTo: string,
+  lockedFrom: string | undefined,
+  lockedTo: string | undefined
+): string | undefined {
+  if (manifestFrom === manifestTo || !lockedFrom || !lockedTo || lockedFrom !== lockedTo) return undefined;
+  return `dependency_diff_manifest_lock_disagreement:${packageName}:${manifestFrom}->${manifestTo}:locked@${lockedFrom}`;
+}

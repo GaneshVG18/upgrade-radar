@@ -4,6 +4,8 @@ import path from "node:path";
 
 const EXPRESS_URL = "https://expressjs.com/en/guide/migrating-5.html";
 const ZOD_URL = "https://zod.dev/v4/changelog";
+const GLOB_URL = "https://github.com/isaacs/node-glob/blob/main/changelog.md";
+const COMMANDER_URL = "https://github.com/tj/commander.js/blob/master/CHANGELOG.md";
 
 function expressApp(style, body) {
   if (style === "cjs") return `const express=require("express");\nconst app=express();\n${body}\n`;
@@ -15,6 +17,29 @@ function zodSource(style, body) {
   if (style === "cjs") return `const { z }=require("zod");\n${body}\n`;
   if (style === "alias") return `import { z as schemaLib } from "zod";\n${body.replaceAll("z.", "schemaLib.")}\n`;
   return `import { z } from "zod";\n${body}\n`;
+}
+
+function globCallableSource(style) {
+  if (style === "cjs") return 'const glob=require("glob");\nglob("*.js",()=>{});\n';
+  const local = style === "alias" ? "matchFiles" : "glob";
+  return `import ${local} from "glob";\n${local}("*.js",()=>{});\n`;
+}
+
+function globNamedSource(style) {
+  if (style === "cjs") return 'const {hasMagic}=require("glob");\nmodule.exports=hasMagic("*.js");\n';
+  const local = style === "alias" ? "matchesPattern" : "hasMagic";
+  const imported = style === "alias" ? "hasMagic as matchesPattern" : "hasMagic";
+  return `import { ${imported} } from "glob";\nexport const result=${local}("*.js");\n`;
+}
+
+function commanderRootSource(style) {
+  const local = style === "alias" ? "cli" : "commander";
+  return `const ${local}=require("commander");\n${local}.option("-d, --debug");\n`;
+}
+
+function commanderNamedProgramSource(style) {
+  if (style === "alias") return 'const {program:cli}=require("commander");\ncli.option("-d, --debug");\n';
+  return 'const {program}=require("commander");\nprogram.option("-d, --debug");\n';
 }
 
 const definitions = [
@@ -89,6 +114,24 @@ const definitions = [
     positive: (style) => zodSource(style, 'export const schema=z.record(z.string());'),
     negative: (style) => zodSource(style, 'export const schema=z.record(z.string(), z.string());'),
     unknown: () => 'import { z } from "zod";\nimport { makeRecord } from "./schema-wrapper.js";\nexport const schema=makeRecord(z.string());\n'
+  },
+  {
+    family: "glob-default-export-removed", split: "dev", package: "glob", from: "8.1.0", to: "10.4.5", sourceUrl: GLOB_URL,
+    behavior: "availability of the callable package root/default export",
+    noteText: "Glob 9 moved from callbacks to promises and changed exported function names; Glob 10 removed the default export, so code that calls the imported or required package root needs migration to a named API.",
+    oldPositive: "function", newPositive: "object", stable: true,
+    positive: (style) => globCallableSource(style),
+    negative: (style) => globNamedSource(style),
+    unknown: () => 'import glob from "glob";\nimport { runGlob } from "./glob-wrapper.js";\nrunGlob(glob);\n'
+  },
+  {
+    family: "commander-commonjs-global-export-removed", split: "dev", package: "commander", from: "11.1.0", to: "12.1.0", sourceUrl: COMMANDER_URL,
+    behavior: "availability of Command methods directly on the CommonJS package root",
+    noteText: "Commander 12 removed the CommonJS default export of the global Command instance; CommonJS callers must use the named program export or an explicit Command instance.",
+    oldPositive: "function", newPositive: "undefined", stable: "function",
+    positive: (style) => commanderRootSource(style),
+    negative: (style) => commanderNamedProgramSource(style),
+    unknown: () => 'import * as commander from "commander";\nimport { configureCli } from "./cli-wrapper.js";\nconfigureCli(commander);\n'
   }
 ];
 

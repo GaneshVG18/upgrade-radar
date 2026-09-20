@@ -8,7 +8,7 @@ import { sha256 } from "../../src/core/util.js";
 import { BaselineProvider } from "../../src/providers/baseline.js";
 import { renderHtml, validateReport } from "../../src/report/render.js";
 import { workingTreeSnapshot } from "../../src/source/inventory.js";
-import type { Provider, Report } from "../../src/types.js";
+import type { Finding, Provider, Report } from "../../src/types.js";
 
 function fixtureRepo() {
   const root = mkdtempSync(path.join(tmpdir(), "upgrade-radar-int-"));
@@ -132,13 +132,14 @@ describe("analysis integration", () => {
     const root = fixtureRepo();
     const { report } = await analyzeUpgrade({ repo: root, upgrade: { package: "express", from: "4.21.2", to: "5.1.0" }, notesPath: path.join(root, "notes.md"), provider: new BaselineProvider(), runMode: "baseline" });
     const first = report.findings[0]!;
+    const firstNote = first.note!;
     const linkedHtml = renderHtml(report);
     expect(linkedHtml).toContain('href="#finding-1-note" data-evidence-target="finding-1-note"');
     expect(linkedHtml).toContain('href="#finding-1-code" data-evidence-target="finding-1-code"');
     expect(linkedHtml).toContain('title="Open original source"');
-    const localEvidence = { ...first, code: { ...first.code }, note: { ...first.note } };
+    const localEvidence: Finding = { ...first, code: { ...first.code }, note: { ...firstNote } };
     delete localEvidence.code.url;
-    delete localEvidence.note.url;
+    delete localEvidence.note!.url;
     const shared: Report = {
       ...report,
       findings: [localEvidence, { ...localEvidence, id: `${first.id}-second` }],
@@ -149,7 +150,7 @@ describe("analysis integration", () => {
     expect(html.match(/id="finding-2-note"/g)).toHaveLength(1);
     expect(html).toContain('href="#finding-1-note" data-evidence-target="finding-1-note"');
     expect(html).toContain('href="#finding-2-note" data-evidence-target="finding-2-note"');
-    expect(html.match(new RegExp(`data-provenance-id="${first.note.id}"`, "g"))).toHaveLength(2);
+    expect(html.match(new RegExp(`data-provenance-id="${firstNote.id}"`, "g"))).toHaveLength(2);
     expect(html).toContain("document.addEventListener('keydown'");
     expect(html).toContain("event.key!=='Enter'&&event.key!==' '");
     expect(html).toContain("details.open=!details.open");
@@ -236,6 +237,130 @@ describe("analysis integration", () => {
     expect(report.upgrades).toEqual([]);
     expect(report.findings).toEqual([]);
     expect(report.unknownItems).toEqual([]);
+  });
+
+  it("reports manifest/lock disagreement instead of a clean no-change result", () => {
+    const root = fixtureRepo();
+    const base = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"express":"5.1.0"}}\n');
+    execFileSync("git", ["add", "package.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "change manifest without lockfile"], { cwd: root });
+    const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "review", "--base", base, "--head", head], { cwd: root, encoding: "utf8" });
+    expect(run.status).toBe(2);
+    expect(run.stdout).not.toMatch(/no direct dependency version changes/i);
+    const report = JSON.parse(readFileSync(path.join(root, "upgrade-radar-report", "report.json"), "utf8")) as Report;
+    const gap = "dependency_diff_manifest_lock_disagreement:express:4.21.2->5.1.0:locked@4.21.2";
+    expect(report.complete).toBe(false);
+    expect(report.coverageLimitations).toContain(gap);
+    expect(report.unknownItems).toContain(gap);
+  });
+
+  it("turns unsupported-package usage into unknown manual-review starting points", () => {
+    const root = fixtureRepo();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"react":"18.2.0"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"react":"18.2.0"}},"node_modules/react":{"version":"18.2.0"}}}\n');
+    writeFileSync(path.join(root, "src/app.tsx"), 'import React from "react";\nexport const node=React.createElement("div");\n');
+    execFileSync("git", ["add", "."], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "react baseline"], { cwd: root });
+    const base = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"react":"19.0.0"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"react":"19.0.0"}},"node_modules/react":{"version":"19.0.0"}}}\n');
+    execFileSync("git", ["add", "package.json", "package-lock.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "upgrade react"], { cwd: root });
+    const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+    const notesDir = path.join(root, "empty-notes");
+    mkdirSync(notesDir);
+    const out = mkdtempSync(path.join(tmpdir(), "upgrade-radar-react-generic-"));
+
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "diff", "--repo", root, "--base", base, "--head", head, "--notes-dir", notesDir, "--provider", "baseline", "--out", out], { encoding: "utf8" });
+    expect(run.status).toBe(2);
+    const report = JSON.parse(readFileSync(path.join(out, "report.json"), "utf8")) as Report;
+    expect(report.complete).toBe(false);
+    expect(report.upgrades).toEqual([{ package: "react", from: "18.2.0", to: "19.0.0" }]);
+    expect(report.findings.length).toBeGreaterThan(0);
+    expect(report.findings.every((finding) => finding.disposition === "unknown")).toBe(true);
+    expect(report.findings[0]).toMatchObject({
+      package: "react",
+      coverage: "generic-adapter",
+      resolvedSymbol: "React.createElement",
+      bindingPath: "react -> default as React -> React.createElement"
+    });
+    expect(report.findings[0]?.note).toBeUndefined();
+    expect(report.findings[0]?.code.path).toBe("src/app.tsx");
+    expect(report.unknownItems).toContain("missing_applicable_notes:react:18.2.0->19.0.0");
+  });
+
+  it("reviews bundled Glob and Commander migrations through their first-class adapters", () => {
+    const root = fixtureRepo();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"glob":"8.1.0","commander":"11.1.0"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"glob":"8.1.0","commander":"11.1.0"}},"node_modules/glob":{"version":"8.1.0"},"node_modules/commander":{"version":"11.1.0"}}}\n');
+    writeFileSync(path.join(root, "src/app.ts"), 'import glob from "glob";\nconst commander=require("commander");\nexport const matches=glob("*.js");\ncommander.option("-d, --debug");\n');
+    execFileSync("git", ["add", "."], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "glob and commander baseline"], { cwd: root });
+    const base = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"glob":"10.4.5","commander":"12.1.0"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"glob":"10.4.5","commander":"12.1.0"}},"node_modules/glob":{"version":"10.4.5"},"node_modules/commander":{"version":"12.1.0"}}}\n');
+    execFileSync("git", ["add", "package.json", "package-lock.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "upgrade glob and commander"], { cwd: root });
+    const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "review", "--base", base, "--head", head], { cwd: root, encoding: "utf8" });
+    expect(run.status).toBe(0);
+    const report = JSON.parse(readFileSync(path.join(root, "upgrade-radar-report", "report.json"), "utf8")) as Report;
+    expect(report.complete).toBe(true);
+    expect(report.upgrades).toEqual([
+      { package: "glob", from: "8.1.0", to: "10.4.5" },
+      { package: "commander", from: "11.1.0", to: "12.1.0" }
+    ]);
+    expect(report.findings.filter((finding) => finding.disposition === "review").map((finding) => finding.changeFamily).sort()).toEqual([
+      "commander-commonjs-global-export-removed",
+      "glob-default-export-removed"
+    ]);
+    expect(report.findings.every((finding) => finding.coverage === "first-class-adapter")).toBe(true);
+  });
+
+  it("keeps generic reviewed-note pairs unknown in baseline but lets a bounded live provider judge them", async () => {
+    const root = fixtureRepo();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"react":"19.0.0"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"react":"19.0.0"}},"node_modules/react":{"version":"19.0.0"}}}\n');
+    writeFileSync(path.join(root, "src/app.tsx"), 'import React from "react";\nexport const node=React.createElement("div");\n');
+    const note = '---\npackage: react\nfrom: 18.2.0\nto: 19.0.0\nsource: https://example.com/react-19\nretrieved: 2026-09-20\n---\n\n# Reviewed change\n\nFamily: generic\n\nA reviewed React migration behavior changed.\n';
+    const notesDir = path.join(root, "react-notes");
+    mkdirSync(notesDir);
+    writeFileSync(path.join(notesDir, "react.md"), note);
+    writeFileSync(path.join(notesDir, "notes-manifest.json"), JSON.stringify({ documents: [{ file: "react.md", package: "react", from: "18.2.0", to: "19.0.0", sourceUrl: "https://example.com/react-19", retrieved: "2026-09-20", sha256: sha256(note) }] }));
+    execFileSync("git", ["add", "."], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "generic react fixture"], { cwd: root });
+
+    const baseline = await analyzeUpgrade({ repo: root, upgrade: { package: "react", from: "18.2.0", to: "19.0.0" }, notesPath: path.join(notesDir, "react.md"), provider: new BaselineProvider(), runMode: "baseline", skipDependencyValidation: true });
+    expect(baseline.report.findings[0]?.disposition).toBe("unknown");
+    expect(baseline.report.findings[0]?.coverage).toBe("generic-adapter");
+
+    const liveProvider: Provider = {
+      name: "jev",
+      payload: (candidate) => new BaselineProvider().payload(candidate),
+      judge: async () => ({ disposition: "review", reasons: ["test_bounded_generic_pair"] })
+    };
+    const live = await analyzeUpgrade({ repo: root, upgrade: { package: "react", from: "18.2.0", to: "19.0.0" }, notesPath: path.join(notesDir, "react.md"), provider: liveProvider, runMode: "jev", skipDependencyValidation: true });
+    expect(live.report.findings[0]?.disposition).toBe("review");
+    expect(live.report.findings[0]?.coverage).toBe("generic-adapter");
+  });
+
+  it("scaffolds reviewed notes without overwriting existing files", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "upgrade-radar-scaffold-"));
+    const out = path.join(root, "react-19.md");
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "notes", "scaffold", "--package", "react", "--from", "18.2.0", "--to", "19.0.0", "--source", "https://react.dev/blog/2024/04/25/react-19-upgrade-guide", "--out", out], { encoding: "utf8" });
+    expect(run.status).toBe(0);
+    const text = readFileSync(out, "utf8");
+    expect(text).toContain("package: react");
+    expect(text).toContain("source: https://react.dev/blog/2024/04/25/react-19-upgrade-guide");
+    expect(text).toContain("Family: TODO");
+    expect(run.stdout).toContain("no network request was made");
+    const second = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "notes", "scaffold", "--package", "react", "--from", "18.2.0", "--to", "19.0.0", "--source", "https://react.dev/blog/2024/04/25/react-19-upgrade-guide", "--out", out], { encoding: "utf8" });
+    expect(second.status).toBe(64);
   });
 
   it("rejects tracked source symlinks and reports source-size truncation", () => {

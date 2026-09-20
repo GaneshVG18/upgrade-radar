@@ -1,7 +1,7 @@
 {
   "schemaVersion": "upgrade-radar-report/v1",
   "runMode": "illustrative_fixture",
-  "generatedAt": "2026-09-20T11:08:51.137Z",
+  "generatedAt": "2026-09-20T15:50:17.339Z",
   "sourceRevision": "authored-demo-fixtures",
   "upgrades": [
     {

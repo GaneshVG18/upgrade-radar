@@ -89,7 +89,10 @@ export interface Finding {
   disposition: Disposition;
   relationship: string;
   code: EvidenceSpan;
-  note: EvidenceSpan;
+  note?: EvidenceSpan;
+  coverage?: "first-class-adapter" | "generic-adapter";
+  resolvedSymbol?: string;
+  bindingPath?: string;
   semantic?: SemanticAnswer;
   reasons: string[];
 }

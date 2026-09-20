@@ -1,5 +1,6 @@
 import type { Candidate, Disposition, Provider, ProviderPayload } from "../types.js";
 import { redactSecrets, truncate } from "../core/util.js";
+import { isFirstClassPackage } from "../adapters/index.js";
 
 export function providerPayload(candidate: Candidate): ProviderPayload {
   const note = truncate(redactSecrets(candidate.note.text), 1800);
@@ -24,6 +25,9 @@ export function providerPayload(candidate: Candidate): ProviderPayload {
 }
 
 export function deterministicDecision(candidate: Candidate): { disposition: Disposition; reasons: string[] } {
+  if (!isFirstClassPackage(candidate.upgrade.package)) {
+    return { disposition: "unknown", reasons: ["generic_adapter_requires_live_jev_for_relevance_judgment"] };
+  }
   if (candidate.usage.missingFacts.length > 0) {
     return { disposition: "unknown", reasons: [...candidate.usage.missingFacts] };
   }

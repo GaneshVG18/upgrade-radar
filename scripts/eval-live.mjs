@@ -145,7 +145,7 @@ const report = {
   generatedAt: new Date().toISOString(),
   durationMs: Date.now() - startedAt,
   labelsEstablishedFromTrackedCorpus: true,
-  splitRule: "Express change families are development; Zod change families are sealed heldout. No heldout tuning is performed by this script.",
+  splitRule: "Express, Glob, and Commander change families are development; Zod change families are sealed heldout. No heldout tuning is performed by this script.",
   corpus: {
     totalCases: corpus.length,
     families: [...new Set(corpus.map((item) => item.family))],

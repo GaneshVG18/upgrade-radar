@@ -49,6 +49,40 @@ describe("source identity and supported syntax", () => {
     expect(zodSites.some((site) => site.family === "package-usage")).toBe(true);
   });
 
+  it("keeps resolved symbol and binding path on generic package usage", () => {
+    const sites = analyzeUsageSites([file("app.tsx", 'import React from "react";\nexport const node=React.createElement("div");')], "react");
+    expect(sites).toHaveLength(1);
+    expect(sites[0]?.family).toBe("generic");
+    expect(sites[0]?.configuration.resolvedSymbol).toBe("React.createElement");
+    expect(sites[0]?.configuration.bindingPath).toBe("react -> default as React -> React.createElement");
+    expect(sites[0]?.span.startLine).toBe(2);
+  });
+
+  it("detects removed Glob root/default callable usage without flagging named APIs", () => {
+    const esm = analyzeUsageSites([file("glob.ts", 'import glob from "glob";\nconst files=glob("*.js");')], "glob");
+    expect(esm.find((site) => site.family === "glob-default-export-removed")?.span.startLine).toBe(2);
+
+    const cjs = analyzeUsageSites([file("glob.cjs", 'const glob=require("glob");\nglob("*.js",()=>{});')], "glob");
+    expect(cjs.find((site) => site.family === "glob-default-export-removed")?.span.startLine).toBe(2);
+
+    const stable = analyzeUsageSites([file("stable.cjs", 'const glob=require("glob");\nmodule.exports=glob.hasMagic("*.js");')], "glob");
+    expect(stable.some((site) => site.family === "glob-default-export-removed")).toBe(false);
+
+    const namespace = analyzeUsageSites([file("namespace.ts", 'import * as glob from "glob";\nglob("*.js");')], "glob");
+    expect(namespace.some((site) => site.family === "glob-default-export-removed")).toBe(false);
+  });
+
+  it("detects removed Commander CommonJS global-program methods but not the named program export", () => {
+    const legacy = analyzeUsageSites([file("cli.cjs", 'const commander=require("commander");\ncommander.option("-d, --debug");')], "commander");
+    expect(legacy.find((site) => site.family === "commander-commonjs-global-export-removed")?.span.startLine).toBe(2);
+
+    const stable = analyzeUsageSites([file("stable.cjs", 'const {program}=require("commander");\nprogram.option("-d, --debug");')], "commander");
+    expect(stable.some((site) => site.family === "commander-commonjs-global-export-removed")).toBe(false);
+
+    const namespace = analyzeUsageSites([file("namespace.ts", 'import * as commander from "commander";\ncommander.option("-d, --debug");')], "commander");
+    expect(namespace.some((site) => site.family === "commander-commonjs-global-export-removed")).toBe(false);
+  });
+
   it("marks non-literal Express query-parser configuration as missing evidence", () => {
     const sites = analyzeUsageSites([file("app.ts", 'import express from "express";\nimport { parser } from "./config.js";\nconst app=express();\napp.set("query parser",parser);\napp.get("/q",(req,res)=>res.json(req.query.a));')], "express");
     const query = sites.find((site) => site.family === "express-query-parser-default");

@@ -1,7 +1,7 @@
 {
   "name": "upgrade-radar",
-  "version": "0.1.4",
-  "private": true,
+  "version": "0.1.5",
+  "private": false,
   "description": "Evidence-linked dependency upgrade review for TypeScript with optional bounded Jev",
   "license": "MIT",
   "repository": {
@@ -12,9 +12,23 @@
     "url": "https://github.com/GaneshVG18/upgrade-radar/issues"
   },
   "homepage": "https://github.com/GaneshVG18/upgrade-radar#readme",
-  "keywords": ["dependency-updates", "static-analysis", "typescript", "migration", "jev"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "dependency-updates",
+    "static-analysis",
+    "typescript",
+    "migration",
+    "jev"
+  ],
   "type": "module",
-  "files": ["dist", "examples/notes", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "examples/notes",
+    "README.md",
+    "LICENSE"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -23,8 +37,12 @@
       "import": "./dist/index.js"
     }
   },
-  "bin": {"upgrade-radar": "dist/cli.js"},
-  "engines": {"node": ">=24 <25"},
+  "bin": {
+    "upgrade-radar": "dist/cli.js"
+  },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "prepare": "npm run build",
     "build": "tsc -p tsconfig.build.json",
@@ -50,8 +68,12 @@
   "devDependencies": {
     "@types/node": "24.10.1",
     "@types/semver": "7.7.1",
+    "commander11": "npm:commander@11.1.0",
+    "commander12": "npm:commander@12.1.0",
     "express4": "npm:express@4.21.2",
     "express5": "npm:express@5.1.0",
+    "glob10": "npm:glob@10.4.5",
+    "glob8": "npm:glob@8.1.0",
     "oxlint": "1.83.0",
     "vitest": "4.1.11",
     "zod3": "npm:zod@3.25.76",
