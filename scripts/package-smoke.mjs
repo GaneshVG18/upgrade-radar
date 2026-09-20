@@ -89,7 +89,20 @@ try {
   assert.ok(report.findings.some((finding) => finding.changeFamily === "express-query-parser-default" && finding.disposition === "review"));
   assert.ok(report.noteProvenance.some((note) => note.package === "express" && note.verified === true));
 
-  console.log("package-smoke: production-only install + zero-config multi-commit review passed");
+  // Regression guard: `demo` reads the authored example sources, which must be
+  // present in the published tarball. Shipping only examples/notes made the
+  // documented no-key entry point fail with ENOENT for every npm consumer.
+  const demoOut = path.join(temp, "demo-report");
+  const demo = spawnSync(process.execPath, [cli, "demo", "--out", demoOut], {
+    cwd: temp,
+    encoding: "utf8",
+    maxBuffer: 32 * 1024 * 1024
+  });
+  assert.equal(demo.status, 0, `packed demo should succeed: ${demo.stderr || demo.stdout}`);
+  const demoReport = JSON.parse(readFileSync(path.join(demoOut, "report.json"), "utf8"));
+  assert.ok(demoReport.findings.length > 0, "packed demo should produce findings");
+
+  console.log("package-smoke: production-only install + zero-config multi-commit review + packed demo passed");
 } finally {
   rmSync(temp, { recursive: true, force: true });
 }
