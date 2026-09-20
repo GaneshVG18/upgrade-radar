@@ -1,6 +1,6 @@
 {
   "name": "upgrade-radar",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "private": false,
   "description": "Which lines of your code does that dependency bump touch? Evidence-linked upgrade review for JS/TS, with explicit unknowns. Runs locally, no API key.",
   "license": "MIT",
