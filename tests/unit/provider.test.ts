@@ -25,16 +25,33 @@ describe("Jev host policy", () => {
     expect((await provider.judge(candidate)).disposition).toBe("unknown");
   });
 
-  it("treats an explicit old-behavior-preserving setting as no direct evidence", async () => {
+  it("uses deterministic visible configuration before calling Jev", async () => {
     const configured = {
       ...candidate,
       usage: { ...candidate.usage, configuration: { queryParser: "extended" } }
     };
-    const fake = { systemOne: async () => ({ model: "jev-test", usage: { input_tokens: 1, output_tokens: 1 }, answers: { disposition: { type: "choice", choice: "review", confidence: .9, probabilities: { review: .9, not_this_change: .05, insufficient_evidence: .05 } }, depends_on_behavior: { type: "noul", noul: .9 }, preserves_old_behavior: { type: "noul", noul: .95 }, missing_required_facts: { type: "noul", noul: .05 } } }) };
+    let calls = 0;
+    const fake = { systemOne: async () => { calls += 1; throw new Error("should not call Jev"); } };
     const provider = new JevProvider({ client: fake as never, model: "jev-test" });
     expect(await provider.judge(configured)).toMatchObject({
       disposition: "no_direct_evidence",
-      reasons: ["jev_explicit_configuration_preserves_old_behavior"]
+      reasons: ["visible_query_parser_configuration_preserves_extended_parsing"]
+    });
+    expect(calls).toBe(0);
+  });
+
+  it("keeps review plus model-reported preservation unknown when host facts do not prove preservation", async () => {
+    const fake = { systemOne: async () => ({ model: "jev-test", usage: { input_tokens: 1, output_tokens: 1 }, answers: { disposition: { type: "choice", choice: "review", confidence: .9, probabilities: { review: .9, not_this_change: .05, insufficient_evidence: .05 } }, depends_on_behavior: { type: "noul", noul: .9 }, preserves_old_behavior: { type: "noul", noul: .95 }, missing_required_facts: { type: "noul", noul: .05 } } }) };
+    const provider = new JevProvider({ client: fake as never, model: "jev-test" });
+    expect((await provider.judge(candidate)).disposition).toBe("unknown");
+  });
+
+  it("keeps low-confidence Jev choices unknown", async () => {
+    const fake = { systemOne: async () => ({ model: "jev-test", usage: { input_tokens: 1, output_tokens: 1 }, answers: { disposition: { type: "choice", choice: "review", confidence: .49, probabilities: { review: .49, not_this_change: .31, insufficient_evidence: .2 } }, depends_on_behavior: { type: "noul", noul: .8 }, preserves_old_behavior: { type: "noul", noul: .1 }, missing_required_facts: { type: "noul", noul: .1 } } }) };
+    const provider = new JevProvider({ client: fake as never, model: "jev-test" });
+    expect(await provider.judge(candidate)).toMatchObject({
+      disposition: "unknown",
+      reasons: ["jev_choice_confidence_below_majority"]
     });
   });
 
@@ -60,6 +77,25 @@ describe("Jev host policy", () => {
     expect(payload.state.note.length).toBeLessThan(1820);
     expect(payload.state.sourceExcerpt.length).toBeLessThan(1820);
     expect(payload.state.note).toContain("[truncated]");
+    expect(payload.state.missingFacts).toEqual(expect.arrayContaining([
+      "provider_note_excerpt_truncated",
+      "provider_source_excerpt_truncated"
+    ]));
+  });
+
+  it("does not call Jev when provider input is deterministically incomplete", async () => {
+    let calls = 0;
+    const fake = { systemOne: async () => { calls += 1; throw new Error("should not call Jev"); } };
+    const provider = new JevProvider({ client: fake as never, model: "jev-test" });
+    const longCandidate = {
+      ...candidate,
+      note: { ...candidate.note, text: "n".repeat(2500) }
+    };
+    expect(await provider.judge(longCandidate)).toMatchObject({
+      disposition: "unknown",
+      reasons: ["provider_input_incomplete:provider_note_excerpt_truncated"]
+    });
+    expect(calls).toBe(0);
   });
 
   it.each(["timeout", "429"])("propagates %s provider failures for the host to mark unknown", async (kind) => {

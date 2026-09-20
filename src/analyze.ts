@@ -72,7 +72,7 @@ function prepare(options: Omit<AnalyzeOptions, "provider" | "runMode">): Prepare
     if (capped) break;
   }
   const limitations = [...commonLimitations, ...factLimitations, ...snapshot.limitations];
-  let hardIncomplete = snapshot.truncatedCount > 0 || unknownItems.length > 0;
+  let hardIncomplete = factLimitations.length > 0 || snapshot.truncatedCount > 0 || unknownItems.length > 0;
   limitations.push(...unknownItems);
   if (!notes.provenanceVerified) {
     limitations.push("notes_manifest_missing_or_hash_provenance_mismatch");

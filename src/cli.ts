@@ -2,7 +2,7 @@
 import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { analyzeUpgrade, dryRunPlan, mergeReports } from "./analyze.js";
-import { directDependenciesFromText, lockVersionFromText } from "./core/dependency.js";
+import { assertExactUpgrade, directDependenciesFromText, lockfileVersionFromText, lockVersionFromText, manifestUsesWorkspaces } from "./core/dependency.js";
 import { illustrativeDemoReport } from "./demo.js";
 import { BaselineProvider, providerPayload } from "./providers/baseline.js";
 import { JevProvider } from "./providers/jev.js";
@@ -132,6 +132,38 @@ function missingNotesReport(upgrade: Upgrade, snapshot: SourceSnapshot, mode: Ru
   };
 }
 
+function coverageGapReport(snapshot: SourceSnapshot, mode: RunMode, gaps: string[]): Report {
+  const unique = [...new Set(gaps)];
+  return {
+    schemaVersion: "upgrade-radar-report/v1",
+    runMode: mode,
+    generatedAt: new Date().toISOString(),
+    sourceRevision: snapshot.revision,
+    upgrades: [],
+    noteProvenance: [],
+    counts: {
+      scanned: snapshot.scannedCount,
+      skipped: snapshot.skippedCount,
+      truncated: snapshot.truncatedCount,
+      candidates: 0,
+      findings: 0,
+      unknown: unique.length
+    },
+    complete: false,
+    findings: [],
+    unknownItems: unique,
+    coverageLimitations: [...new Set([...snapshot.limitations, ...unique])]
+  };
+}
+
+function optionalGitTextAt(repo: string, revision: string, file: string): string | undefined {
+  try {
+    return gitTextAt(repo, revision, file);
+  } catch {
+    return undefined;
+  }
+}
+
 async function runAnalyze(args: Args): Promise<number> {
   const repo = path.resolve(required(args, "repo"));
   const upgrade = { package: required(args, "package"), from: required(args, "from"), to: required(args, "to") };
@@ -158,20 +190,49 @@ async function runDiff(args: Args): Promise<number> {
   const notesDir = path.resolve(required(args, "notes-dir"));
   const out = path.resolve(typeof args.out === "string" ? args.out : "artifacts/review");
   const { provider, mode } = providerFrom(args);
-  const baseManifest = directDependenciesFromText(gitTextAt(repo, base, "package.json"));
-  const headManifest = directDependenciesFromText(gitTextAt(repo, head, "package.json"));
-  const baseLock = gitTextAt(repo, base, "package-lock.json");
-  const headLock = gitTextAt(repo, head, "package-lock.json");
+  const snapshot = gitObjectSnapshot(repo, head);
+  const baseManifestText = gitTextAt(repo, base, "package.json");
+  const headManifestText = gitTextAt(repo, head, "package.json");
+  const baseManifest = directDependenciesFromText(baseManifestText);
+  const headManifest = directDependenciesFromText(headManifestText);
+  const baseLock = optionalGitTextAt(repo, base, "package-lock.json");
+  const headLock = optionalGitTextAt(repo, head, "package-lock.json");
+  const dependencyGaps: string[] = [];
+  if (manifestUsesWorkspaces(baseManifestText) || manifestUsesWorkspaces(headManifestText)) {
+    dependencyGaps.push("npm_workspaces_not_supported");
+  }
+  if (!baseLock) dependencyGaps.push("dependency_diff_base_package_lock_missing");
+  if (!headLock) dependencyGaps.push("dependency_diff_head_package_lock_missing");
+  if (baseLock) {
+    const version = lockfileVersionFromText(baseLock);
+    if (version !== 2 && version !== 3) dependencyGaps.push(`dependency_diff_unsupported_base_lockfile_version:${String(version ?? "missing")}`);
+  }
+  if (headLock) {
+    const version = lockfileVersionFromText(headLock);
+    if (version !== 2 && version !== 3) dependencyGaps.push(`dependency_diff_unsupported_head_lockfile_version:${String(version ?? "missing")}`);
+  }
   const upgrades: Upgrade[] = [];
   for (const name of Object.keys(headManifest)) {
     if (!(name in baseManifest)) continue;
-    const from = lockVersionFromText(baseLock, name);
-    const to = lockVersionFromText(headLock, name);
-    if (from && to && from !== to) upgrades.push({ package: name, from, to });
+    const from = baseLock ? lockVersionFromText(baseLock, name) : undefined;
+    const to = headLock ? lockVersionFromText(headLock, name) : undefined;
+    const manifestChanged = baseManifest[name] !== headManifest[name];
+    if ((!from || !to) && manifestChanged) {
+      dependencyGaps.push(`dependency_diff_unresolved_direct_version:${name}`);
+      continue;
+    }
+    if (from && to && from !== to) {
+      const upgrade = { package: name, from, to };
+      try {
+        assertExactUpgrade(upgrade);
+        upgrades.push(upgrade);
+      } catch {
+        dependencyGaps.push(`dependency_diff_non_upgrade_or_invalid_semver:${name}:${from}->${to}`);
+      }
+    }
   }
-  if (upgrades.length === 0) throw new Error("No direct dependency version changes found between base and head");
-  const snapshot = gitObjectSnapshot(repo, head);
-  const reports = [];
+  if (upgrades.length === 0 && dependencyGaps.length === 0) throw new Error("No direct dependency version changes found between base and head");
+  const reports: Report[] = dependencyGaps.length > 0 ? [coverageGapReport(snapshot, mode, dependencyGaps)] : [];
   let providerFailure = false;
   for (const upgrade of upgrades) {
     const notesPath = noteFile(notesDir, upgrade);

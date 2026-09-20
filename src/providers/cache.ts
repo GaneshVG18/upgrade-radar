@@ -1,7 +1,7 @@
 import type { Candidate } from "../types.js";
 import { sha256 } from "../core/util.js";
 
-export const JEV_POLICY_VERSION = "jev-policy/v2";
+export const JEV_POLICY_VERSION = "jev-policy/v3";
 export const JEV_QUESTION_VERSION = "jev-questions/v1";
 
 export function providerCacheKey(candidate: Candidate, resolvedModel: string | undefined): string | undefined {

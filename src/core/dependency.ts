@@ -7,6 +7,7 @@ interface PackageJson {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
   optionalDependencies?: Record<string, string>;
+  workspaces?: unknown;
 }
 
 interface Lockfile {
@@ -35,6 +36,13 @@ export function validateLocalDependencyFacts(repo: string, upgrade: Upgrade): st
   if (!declared) throw new Error(`${upgrade.package} is not a direct dependency in package.json`);
 
   const limitations: string[] = [];
+  if (manifest.workspaces !== undefined) limitations.push("npm_workspaces_not_supported");
+  const declaredRange = semver.validRange(declared);
+  if (!declaredRange) {
+    limitations.push(`unsupported_dependency_spec:${upgrade.package}:${declared}`);
+  } else if (!semver.satisfies(upgrade.from, declaredRange)) {
+    throw new Error(`package.json declares ${upgrade.package}@${declared}, which does not include --from ${upgrade.from}`);
+  }
   const lockPath = path.join(repo, "package-lock.json");
   try {
     const lock = JSON.parse(readFileSync(lockPath, "utf8")) as Lockfile;
@@ -58,6 +66,14 @@ export function lockVersionFromText(lockText: string, packageName: string): stri
   const lock = JSON.parse(lockText) as Lockfile;
   if (lock.lockfileVersion !== 2 && lock.lockfileVersion !== 3) return undefined;
   return lock.packages?.[`node_modules/${packageName}`]?.version;
+}
+
+export function lockfileVersionFromText(lockText: string): number | undefined {
+  return (JSON.parse(lockText) as Lockfile).lockfileVersion;
+}
+
+export function manifestUsesWorkspaces(manifestText: string): boolean {
+  return (JSON.parse(manifestText) as PackageJson).workspaces !== undefined;
 }
 
 export function directDependenciesFromText(manifestText: string): Record<string, string> {

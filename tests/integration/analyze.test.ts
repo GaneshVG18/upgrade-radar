@@ -69,6 +69,32 @@ describe("analysis integration", () => {
     await expect(analyzeUpgrade({ repo: root, upgrade: { package: "express", from: "4.21.2", to: "5.2.0" }, notesPath: path.join(root, "notes.md"), provider: new BaselineProvider(), runMode: "baseline" })).rejects.toThrow(/Notes applicability mismatch/);
   });
 
+  it("marks incomplete dependency facts as incomplete instead of a clean report", async () => {
+    const missingLock = fixtureRepo();
+    unlinkSync(path.join(missingLock, "package-lock.json"));
+    execFileSync("git", ["add", "-u"], { cwd: missingLock });
+    execFileSync("git", ["commit", "-qm", "remove lockfile"], { cwd: missingLock });
+    const missingResult = await analyzeUpgrade({ repo: missingLock, upgrade: { package: "express", from: "4.21.2", to: "5.1.0" }, notesPath: path.join(missingLock, "notes.md"), provider: new BaselineProvider(), runMode: "baseline" });
+    expect(missingResult.report.complete).toBe(false);
+    expect(missingResult.report.coverageLimitations).toContain("package_lock_missing");
+
+    const workspaceRoot = fixtureRepo();
+    writeFileSync(path.join(workspaceRoot, "package.json"), '{"name":"fixture","workspaces":["packages/*"],"dependencies":{"express":"4.21.2"}}\n');
+    execFileSync("git", ["add", "package.json"], { cwd: workspaceRoot });
+    execFileSync("git", ["commit", "-qm", "workspace root"], { cwd: workspaceRoot });
+    const workspaceResult = await analyzeUpgrade({ repo: workspaceRoot, upgrade: { package: "express", from: "4.21.2", to: "5.1.0" }, notesPath: path.join(workspaceRoot, "notes.md"), provider: new BaselineProvider(), runMode: "baseline" });
+    expect(workspaceResult.report.complete).toBe(false);
+    expect(workspaceResult.report.coverageLimitations).toContain("npm_workspaces_not_supported");
+  });
+
+  it("rejects package.json ranges that disagree with the explicit from version", async () => {
+    const root = fixtureRepo();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"express":"^5.0.0"}}\n');
+    execFileSync("git", ["add", "package.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "mismatched range"], { cwd: root });
+    await expect(analyzeUpgrade({ repo: root, upgrade: { package: "express", from: "4.21.2", to: "5.1.0" }, notesPath: path.join(root, "notes.md"), provider: new BaselineProvider(), runMode: "baseline" })).rejects.toThrow(/does not include --from/);
+  });
+
   it("continues a partial provider batch and preserves successful rows", async () => {
     const root = fixtureRepo();
     writeFileSync(path.join(root, "src/app.ts"), 'import express from "express";\nconst app=express();\napp.get("/q1",(req,res)=>res.json(req.query.a));\napp.get("/q2",(req,res)=>res.json(req.query.b));\n');
@@ -202,6 +228,60 @@ describe("analysis integration", () => {
     expect(run.stderr).not.toMatch(/No such remote/);
     const after = execFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" });
     expect(after).toBe(before);
+  });
+
+  it("keeps unsupported diff dependency facts visible and incomplete", () => {
+    const missingLockRoot = fixtureRepo();
+    const missingBase = execFileSync("git", ["rev-parse", "HEAD"], { cwd: missingLockRoot, encoding: "utf8" }).trim();
+    writeFileSync(path.join(missingLockRoot, "package.json"), '{"name":"fixture","dependencies":{"express":"5.1.0"}}\n');
+    unlinkSync(path.join(missingLockRoot, "package-lock.json"));
+    execFileSync("git", ["add", "-A"], { cwd: missingLockRoot });
+    execFileSync("git", ["commit", "-qm", "upgrade without lock"], { cwd: missingLockRoot });
+    const missingHead = execFileSync("git", ["rev-parse", "HEAD"], { cwd: missingLockRoot, encoding: "utf8" }).trim();
+    const missingOut = mkdtempSync(path.join(tmpdir(), "upgrade-radar-diff-missing-lock-"));
+    const missingRun = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "diff", "--repo", missingLockRoot, "--base", missingBase, "--head", missingHead, "--notes-dir", missingLockRoot, "--provider", "baseline", "--out", missingOut], { encoding: "utf8" });
+    expect(missingRun.status).toBe(2);
+    const missingReport = JSON.parse(readFileSync(path.join(missingOut, "report.json"), "utf8")) as Report;
+    expect(missingReport.complete).toBe(false);
+    expect(missingReport.coverageLimitations).toContain("dependency_diff_head_package_lock_missing");
+    expect(missingReport.unknownItems).toContain("dependency_diff_unresolved_direct_version:express");
+
+    const workspaceRoot = fixtureRepo();
+    writeFileSync(path.join(workspaceRoot, "package.json"), '{"name":"fixture","workspaces":["packages/*"],"dependencies":{"express":"4.21.2"}}\n');
+    execFileSync("git", ["add", "package.json"], { cwd: workspaceRoot });
+    execFileSync("git", ["commit", "-qm", "workspace baseline"], { cwd: workspaceRoot });
+    const workspaceBase = execFileSync("git", ["rev-parse", "HEAD"], { cwd: workspaceRoot, encoding: "utf8" }).trim();
+    writeFileSync(path.join(workspaceRoot, "package.json"), '{"name":"fixture","workspaces":["packages/*"],"dependencies":{"express":"5.1.0"}}\n');
+    writeFileSync(path.join(workspaceRoot, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"express":"5.1.0"}},"node_modules/express":{"version":"5.1.0"}}}\n');
+    execFileSync("git", ["add", "package.json", "package-lock.json"], { cwd: workspaceRoot });
+    execFileSync("git", ["commit", "-qm", "workspace upgrade"], { cwd: workspaceRoot });
+    const workspaceHead = execFileSync("git", ["rev-parse", "HEAD"], { cwd: workspaceRoot, encoding: "utf8" }).trim();
+    const workspaceOut = mkdtempSync(path.join(tmpdir(), "upgrade-radar-diff-workspace-"));
+    const workspaceRun = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "diff", "--repo", workspaceRoot, "--base", workspaceBase, "--head", workspaceHead, "--notes-dir", workspaceRoot, "--provider", "baseline", "--out", workspaceOut], { encoding: "utf8" });
+    expect(workspaceRun.status).toBe(2);
+    const workspaceReport = JSON.parse(readFileSync(path.join(workspaceOut, "report.json"), "utf8")) as Report;
+    expect(workspaceReport.upgrades).toContainEqual({ package: "express", from: "4.21.2", to: "5.1.0" });
+    expect(workspaceReport.coverageLimitations).toContain("npm_workspaces_not_supported");
+  });
+
+  it("does not treat a dependency downgrade as an upgrade", () => {
+    const root = fixtureRepo();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"express":"5.1.0"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"express":"5.1.0"}},"node_modules/express":{"version":"5.1.0"}}}\n');
+    execFileSync("git", ["add", "package.json", "package-lock.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "express five baseline"], { cwd: root });
+    const base = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"express":"4.21.2"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"express":"4.21.2"}},"node_modules/express":{"version":"4.21.2"}}}\n');
+    execFileSync("git", ["add", "package.json", "package-lock.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "downgrade express"], { cwd: root });
+    const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+    const out = mkdtempSync(path.join(tmpdir(), "upgrade-radar-diff-downgrade-"));
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "diff", "--repo", root, "--base", base, "--head", head, "--notes-dir", root, "--provider", "baseline", "--out", out], { encoding: "utf8" });
+    expect(run.status).toBe(2);
+    const report = JSON.parse(readFileSync(path.join(out, "report.json"), "utf8")) as Report;
+    expect(report.upgrades).toEqual([]);
+    expect(report.unknownItems).toContain("dependency_diff_non_upgrade_or_invalid_semver:express:5.1.0->4.21.2");
   });
 
   it("does not follow note-manifest paths outside the supplied notes directory", () => {

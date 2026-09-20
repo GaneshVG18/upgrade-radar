@@ -148,33 +148,55 @@ function addSite(sites: UsageSite[], file: SourceFile, sf: ts.SourceFile, node: 
 function expressSites(file: SourceFile, sf: ts.SourceFile, bindings: Map<string, Binding>): UsageSite[] {
   const sites: UsageSite[] = [];
   const appVars = new Set<string>();
-  let queryParser: string | null = null;
-  let queryParserUnknown = false;
+  const localHandlers = new Map<string, ts.FunctionLikeDeclarationBase>();
+  const queryParserByApp = new Map<string, { value: string | null; unknown: boolean }>();
 
   const discover = (node: ts.Node): void => {
+    if (ts.isFunctionDeclaration(node) && node.name && node.body) {
+      localHandlers.set(node.name.text, node);
+    }
     if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer && ts.isCallExpression(node.initializer)) {
       const expr = node.initializer.expression;
       if (ts.isIdentifier(expr) && bindings.has(expr.text)) {
         appVars.add(node.name.text);
+        queryParserByApp.set(node.name.text, { value: null, unknown: false });
         addSite(sites, file, sf, node.initializer, "express", "package-usage", `${expr.text}()`);
       }
       if (ts.isPropertyAccessExpression(expr) && expr.name.text === "Router" && rootIdentifier(expr) && bindings.has(rootIdentifier(expr)!)) {
         appVars.add(node.name.text);
+        queryParserByApp.set(node.name.text, { value: null, unknown: false });
         addSite(sites, file, sf, node.initializer, "express", "package-usage", `${rootIdentifier(expr)}.Router()`);
       }
+    }
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer
+      && (ts.isArrowFunction(node.initializer) || ts.isFunctionExpression(node.initializer))) {
+      localHandlers.set(node.name.text, node.initializer);
     }
     ts.forEachChild(node, discover);
   };
   discover(sf);
 
-  const inspectHandler = (fn: ts.FunctionLikeDeclarationBase): void => {
+  const inspectHandler = (fn: ts.FunctionLikeDeclarationBase, receiver: string): void => {
+    const parserState = queryParserByApp.get(receiver) ?? { value: null, unknown: true };
     const req = fn.parameters[0]?.name;
-    if (!req || !ts.isIdentifier(req) || !fn.body) return;
+    if (!req || !fn.body) return;
+    if (ts.isObjectBindingPattern(req)) {
+      for (const element of req.elements) {
+        const property = element.propertyName && ts.isIdentifier(element.propertyName)
+          ? element.propertyName.text
+          : ts.isIdentifier(element.name) ? element.name.text : undefined;
+        if (property === "query") {
+          addSite(sites, file, sf, element, "express", "express-query-parser-default", `req.query (destructured via ${receiver})`, { queryParser: parserState.value }, parserState.unknown ? ["query_parser_configuration_is_not_literal"] : []);
+        }
+      }
+      return;
+    }
+    if (!ts.isIdentifier(req)) return;
     const reqName = req.text;
     const visit = (node: ts.Node): void => {
       if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === reqName) {
         if (node.name.text === "query") {
-          addSite(sites, file, sf, node, "express", "express-query-parser-default", "req.query", { queryParser }, queryParserUnknown ? ["query_parser_configuration_is_not_literal"] : []);
+          addSite(sites, file, sf, node, "express", "express-query-parser-default", `req.query via ${receiver}`, { queryParser: parserState.value }, parserState.unknown ? ["query_parser_configuration_is_not_literal"] : []);
         }
         if (node.name.text === "param" && ts.isCallExpression(node.parent) && node.parent.expression === node) {
           addSite(sites, file, sf, node.parent, "express", "express-req-param-removed", "req.param");
@@ -185,23 +207,47 @@ function expressSites(file: SourceFile, sf: ts.SourceFile, bindings: Map<string,
     visit(fn.body);
   };
 
+  const collectConfiguration = (node: ts.Node): void => {
+    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression) && ts.isIdentifier(node.expression.expression)) {
+      const receiver = node.expression.expression.text;
+      const method = node.expression.name.text;
+      if (appVars.has(receiver) && method === "set" && node.arguments[0] && ts.isStringLiteral(node.arguments[0]) && node.arguments[0].text === "query parser") {
+        const value = node.arguments[1];
+        const topLevelStatement = ts.isExpressionStatement(node.parent) && ts.isSourceFile(node.parent.parent);
+        if (topLevelStatement && value && ts.isStringLiteral(value)) {
+          queryParserByApp.set(receiver, { value: value.text, unknown: false });
+        } else {
+          queryParserByApp.set(receiver, { value: null, unknown: true });
+        }
+      }
+    }
+    ts.forEachChild(node, collectConfiguration);
+  };
+  collectConfiguration(sf);
+
+  const hasUnnamedWildcard = (route: string): boolean => /\*(?![A-Za-z_$"])/.test(route);
+  const routeMethods = new Set(["all", "delete", "del", "get", "head", "options", "patch", "post", "put"]);
+
   const visit = (node: ts.Node): void => {
     if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression) && ts.isIdentifier(node.expression.expression)) {
       const receiver = node.expression.expression.text;
       const method = node.expression.name.text;
       if (appVars.has(receiver)) {
-        if (method === "set" && node.arguments[0] && ts.isStringLiteral(node.arguments[0]) && node.arguments[0].text === "query parser") {
-          const value = node.arguments[1];
-          if (value && ts.isStringLiteral(value)) queryParser = value.text;
-          else queryParserUnknown = true;
-        }
         if (method === "del") addSite(sites, file, sf, node, "express", "express-app-del-removed", `${receiver}.del`);
         const first = node.arguments[0];
-        if (first && ts.isStringLiteral(first) && first.text.includes("/*")) {
-          addSite(sites, file, sf, first, "express", "express-wildcard-named", `${receiver}.${method}`);
+        if (routeMethods.has(method) && first) {
+          if (ts.isStringLiteral(first) && hasUnnamedWildcard(first.text)) {
+            addSite(sites, file, sf, first, "express", "express-wildcard-named", `${receiver}.${method}`);
+          } else if (!ts.isStringLiteral(first)) {
+            addSite(sites, file, sf, first, "express", "express-wildcard-named", `${receiver}.${method}`, {}, ["route_path_is_not_literal"]);
+          }
         }
         for (const arg of node.arguments) {
-          if (ts.isArrowFunction(arg) || ts.isFunctionExpression(arg)) inspectHandler(arg);
+          if (ts.isArrowFunction(arg) || ts.isFunctionExpression(arg)) inspectHandler(arg, receiver);
+          else if (ts.isIdentifier(arg)) {
+            const handler = localHandlers.get(arg.text);
+            if (handler) inspectHandler(handler, receiver);
+          }
         }
       }
     }
@@ -213,6 +259,87 @@ function expressSites(file: SourceFile, sf: ts.SourceFile, bindings: Map<string,
 
 function zodSites(file: SourceFile, sf: ts.SourceFile, bindings: Map<string, Binding>): UsageSite[] {
   const sites: UsageSite[] = [];
+  type TrackedSchema = {
+    kind: "number" | "default-transform";
+    node: ts.CallExpression;
+    root: string;
+    identity: ts.Node;
+  };
+  const schemaVariables = new Map<string, TrackedSchema>();
+  const trackedSchemas: TrackedSchema[] = [];
+  const consumedSchemas = new Set<ts.Node>();
+
+  const trackedSchema = (node: ts.Expression): TrackedSchema | undefined => {
+    if (ts.isIdentifier(node)) return schemaVariables.get(node.text);
+    if (!ts.isCallExpression(node) || !ts.isPropertyAccessExpression(node.expression)) return undefined;
+    const root = rootIdentifier(node.expression);
+    const method = node.expression.name.text;
+    if (root && bindings.has(root)) {
+      if (method === "number") return { kind: "number", node, root, identity: node };
+      if (method === "default" && node.expression.expression.getText(sf).includes(".transform(")) {
+        return { kind: "default-transform", node, root, identity: node };
+      }
+    }
+    if (method === "parse" || method === "safeParse") return undefined;
+    const inherited = trackedSchema(node.expression.expression);
+    return inherited ? { ...inherited, node } : undefined;
+  };
+
+  const discoverSchemas = (node: ts.Node): void => {
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
+      const tracked = trackedSchema(node.initializer);
+      if (tracked) {
+        schemaVariables.set(node.name.text, tracked);
+        if (!trackedSchemas.some((item) => item.identity === tracked.identity)) trackedSchemas.push(tracked);
+      }
+    }
+    if (ts.isExportAssignment(node) && ts.isCallExpression(node.expression)) {
+      const tracked = trackedSchema(node.expression);
+      if (tracked && !trackedSchemas.some((item) => item.identity === tracked.identity)) trackedSchemas.push(tracked);
+    }
+    ts.forEachChild(node, discoverSchemas);
+  };
+  discoverSchemas(sf);
+
+  const isUndefinedInput = (node: ts.Expression | undefined): boolean =>
+    !node
+    || (ts.isIdentifier(node) && node.text === "undefined")
+    || ts.isVoidExpression(node);
+  const isInfinityInput = (node: ts.Expression | undefined): boolean => {
+    if (!node) return false;
+    if (ts.isIdentifier(node) && node.text === "Infinity") return true;
+    return ts.isPrefixUnaryExpression(node) && ts.isIdentifier(node.operand) && node.operand.text === "Infinity";
+  };
+  const isDefinitelyLiteral = (node: ts.Expression | undefined): boolean => {
+    if (!node) return false;
+    if (ts.isStringLiteral(node) || ts.isNumericLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return true;
+    if (node.kind === ts.SyntaxKind.TrueKeyword || node.kind === ts.SyntaxKind.FalseKeyword || node.kind === ts.SyntaxKind.NullKeyword) return true;
+    return ts.isPrefixUnaryExpression(node) && ts.isNumericLiteral(node.operand);
+  };
+
+  const inspectParseCall = (node: ts.CallExpression): void => {
+    if (!ts.isPropertyAccessExpression(node.expression)) return;
+    const method = node.expression.name.text;
+    if (method !== "parse" && method !== "safeParse") return;
+    const tracked = trackedSchema(node.expression.expression);
+    if (!tracked) return;
+    consumedSchemas.add(tracked.identity);
+    const input = node.arguments[0];
+    if (tracked.kind === "number") {
+      if (isInfinityInput(input)) {
+        addSite(sites, file, sf, node, "zod", "zod-number-infinity", `${tracked.root}.number().${method}()`, { parseInput: "Infinity" });
+      } else if (!isDefinitelyLiteral(input)) {
+        addSite(sites, file, sf, node, "zod", "zod-number-infinity", `${tracked.root}.number().${method}()`, { parseInput: null }, ["zod_number_parse_input_is_not_literal"]);
+      }
+      return;
+    }
+    if (isUndefinedInput(input)) {
+      addSite(sites, file, sf, node, "zod", "zod-default-short-circuit", `${tracked.root}.transform().default().${method}()`, { parseInput: "undefined" });
+    } else if (!isDefinitelyLiteral(input)) {
+      addSite(sites, file, sf, node, "zod", "zod-default-short-circuit", `${tracked.root}.transform().default().${method}()`, { parseInput: null }, ["zod_default_parse_input_is_not_literal"]);
+    }
+  };
+
   const visit = (node: ts.Node): void => {
     if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
       const root = rootIdentifier(node.expression);
@@ -225,16 +352,22 @@ function zodSites(file: SourceFile, sf: ts.SourceFile, bindings: Map<string, Bin
         if (method === "optional" && text.includes(".default(")) {
           addSite(sites, file, sf, node, "zod", "zod-optional-default", `${root}.default().optional()`);
         }
-        if (method === "default" && node.expression.expression.getText(sf).includes(".transform(")) {
-          addSite(sites, file, sf, node, "zod", "zod-default-short-circuit", `${root}.transform().default()`);
-        }
-        if (method === "number") addSite(sites, file, sf, node, "zod", "zod-number-infinity", `${root}.number`);
         if (method === "record" && node.arguments.length === 1) addSite(sites, file, sf, node, "zod", "zod-record-one-arg", `${root}.record`);
       }
+      inspectParseCall(node);
     }
     ts.forEachChild(node, visit);
   };
   visit(sf);
+
+  for (const tracked of trackedSchemas) {
+    if (consumedSchemas.has(tracked.identity)) continue;
+    if (tracked.kind === "number") {
+      addSite(sites, file, sf, tracked.node, "zod", "zod-number-infinity", `${tracked.root}.number`, { parseInput: null }, ["zod_number_parse_input_not_visible"]);
+    } else {
+      addSite(sites, file, sf, tracked.node, "zod", "zod-default-short-circuit", `${tracked.root}.transform().default()`, { parseInput: null }, ["zod_default_parse_input_not_visible"]);
+    }
+  }
   return sites;
 }
 
@@ -265,6 +398,17 @@ export function unsupportedPackageReferences(files: SourceFile[], targetPackage:
   const items: string[] = [];
   for (const file of files) {
     const sf = parse(file);
+    const targetBindings = directBindings(sf, targetPackage);
+    const localImports = new Set<string>();
+    sf.forEachChild((node) => {
+      if (!ts.isImportDeclaration(node) || !node.importClause || !ts.isStringLiteral(node.moduleSpecifier) || !node.moduleSpecifier.text.startsWith(".")) return;
+      if (node.importClause.name) localImports.add(node.importClause.name.text);
+      const named = node.importClause.namedBindings;
+      if (named && ts.isNamespaceImport(named)) localImports.add(named.name.text);
+      if (named && ts.isNamedImports(named)) {
+        for (const element of named.elements) localImports.add(element.name.text);
+      }
+    });
     const literalBindings = new Map<string, string>();
     const collectLiterals = (node: ts.Node): void => {
       if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
@@ -276,16 +420,55 @@ export function unsupportedPackageReferences(files: SourceFile[], targetPackage:
     };
     collectLiterals(sf);
 
+    const appVars = new Set<string>();
+    const localHandlers = new Map<string, ts.FunctionLikeDeclarationBase>();
+    const expressHandlerMethods = new Set(["all", "delete", "del", "get", "head", "options", "patch", "post", "put", "use"]);
+    if (targetPackage === "express") {
+      const discoverExpress = (node: ts.Node): void => {
+        if (ts.isFunctionDeclaration(node) && node.name && node.body) localHandlers.set(node.name.text, node);
+        if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
+          if (ts.isArrowFunction(node.initializer) || ts.isFunctionExpression(node.initializer)) {
+            localHandlers.set(node.name.text, node.initializer);
+          } else if (ts.isCallExpression(node.initializer)) {
+            const root = rootIdentifier(node.initializer.expression);
+            if (root && targetBindings.has(root)) appVars.add(node.name.text);
+          }
+        }
+        ts.forEachChild(node, discoverExpress);
+      };
+      discoverExpress(sf);
+    }
+
     const moduleName = (node: ts.Expression | undefined): string | undefined => {
       if (!node) return undefined;
       if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
       if (ts.isIdentifier(node)) return literalBindings.get(node.text);
       return undefined;
     };
-    const add = (node: ts.Node, kind: "dynamic_import" | "computed_require"): void => {
+    const add = (node: ts.Node, kind: "dynamic_import" | "computed_require" | "unresolved_local_wrapper"): void => {
       const line = sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1;
       items.push(`unsupported_package_reference:${targetPackage}:${kind}:${file.path}:${line}`);
     };
+
+    const callUsesTargetExpression = (node: ts.CallExpression): boolean =>
+      node.arguments.some((arg) => {
+        const root = rootIdentifier(arg);
+        return Boolean(root && targetBindings.has(root));
+      });
+
+    const inspectExpressHandler = (fn: ts.FunctionLikeDeclarationBase): void => {
+      const req = fn.parameters[0]?.name;
+      if (!req || !ts.isIdentifier(req) || !fn.body) return;
+      const visitHandler = (node: ts.Node): void => {
+        if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && localImports.has(node.expression.text)
+          && node.arguments.some((arg) => ts.isIdentifier(arg) && arg.text === req.text)) {
+          add(node, "unresolved_local_wrapper");
+        }
+        ts.forEachChild(node, visitHandler);
+      };
+      visitHandler(fn.body);
+    };
+
     const visit = (node: ts.Node): void => {
       if (ts.isCallExpression(node) && node.arguments.length >= 1) {
         const arg = node.arguments[0];
@@ -295,6 +478,28 @@ export function unsupportedPackageReferences(files: SourceFile[], targetPackage:
         } else if (ts.isIdentifier(node.expression) && node.expression.text === "require"
           && !ts.isStringLiteral(arg) && moduleName(arg) === targetPackage) {
           add(node, "computed_require");
+        } else if (ts.isIdentifier(node.expression) && localImports.has(node.expression.text)
+          && (callUsesTargetExpression(node) || node.arguments.some((value) => ts.isIdentifier(value) && appVars.has(value.text)))) {
+          add(node, "unresolved_local_wrapper");
+        }
+
+        if (targetPackage === "express" && ts.isPropertyAccessExpression(node.expression)
+          && ts.isIdentifier(node.expression.expression) && appVars.has(node.expression.expression.text)) {
+          if (expressHandlerMethods.has(node.expression.name.text)) {
+            const handlerArguments = node.expression.name.text === "use"
+              ? (node.arguments.length === 1 ? node.arguments : node.arguments.slice(1))
+              : node.arguments.slice(1);
+            for (const value of handlerArguments) {
+              if (ts.isIdentifier(value) && localImports.has(value.text)) add(value, "unresolved_local_wrapper");
+            }
+          }
+          for (const value of node.arguments) {
+            if (ts.isArrowFunction(value) || ts.isFunctionExpression(value)) inspectExpressHandler(value);
+            else if (ts.isIdentifier(value)) {
+              const handler = localHandlers.get(value.text);
+              if (handler) inspectExpressHandler(handler);
+            }
+          }
         }
       }
       ts.forEachChild(node, visit);

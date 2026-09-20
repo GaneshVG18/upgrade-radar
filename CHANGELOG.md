@@ -3,7 +3,11 @@
 ## Unreleased
 
 - Redesigned the standalone HTML report as a compact retro engineering review instrument while preserving offline operation, evidence navigation, filtering, run context, unknown coverage, and keyboard/mobile behavior.
-- Updated Jev host policy to treat an explicitly shown old-behavior-preserving configuration as pair-local `no_direct_evidence` instead of an ambiguous unknown.
+- Hardened direct-dependency evidence so missing/unsupported lockfiles, workspaces, range mismatches, unresolved diff versions, and dependency downgrades cannot look complete.
+- Tightened Express analysis for same-file named handlers, destructured `req.query`, named-vs-unnamed wildcards, non-literal routes, final visible parser configuration, and unresolved local wrappers. Conditional parser settings now remain unknown.
+- Tightened Zod analysis so Infinity/default-short-circuit findings depend on visible parse inputs; hidden or cross-file use remains explicit unknown coverage.
+- Updated Jev host policy to v3: deterministic visible preservation can bypass Jev, incomplete/truncated provider input abstains before a request, low-confidence or contradictory responses remain unknown, and model-reported preservation alone cannot suppress review.
+- Private evaluation now records unresolved-wrapper coverage alongside retrieval misses so authored unknown cases cannot silently vanish from end-to-end accounting.
 - Made Jev dry-run credential-free because it only renders the redacted payload and sends no provider request.
 - Restricted diff-mode note discovery to regular files inside the supplied notes directory; manifest path escapes and note symlinks are ignored.
 - Enforced the documented Node 24 runtime during npm installs with `engine-strict`.

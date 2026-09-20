@@ -2,20 +2,23 @@ import type { Candidate, Disposition, Provider, ProviderPayload } from "../types
 import { redactSecrets, truncate } from "../core/util.js";
 
 export function providerPayload(candidate: Candidate): ProviderPayload {
-  const note = truncate(redactSecrets(candidate.note.text), 1800).value;
-  const sourceExcerpt = truncate(redactSecrets(candidate.usage.span.excerpt), 1800).value;
+  const note = truncate(redactSecrets(candidate.note.text), 1800);
+  const sourceExcerpt = truncate(redactSecrets(candidate.usage.span.excerpt), 1800);
+  const missingFacts = [...candidate.usage.missingFacts];
+  if (note.truncated) missingFacts.push("provider_note_excerpt_truncated");
+  if (sourceExcerpt.truncated) missingFacts.push("provider_source_excerpt_truncated");
   return {
     state: {
       package: candidate.upgrade.package,
       from: candidate.upgrade.from,
       to: candidate.upgrade.to,
-      note,
+      note: note.value,
       noteContext: candidate.note.heading,
       noteFamily: candidate.note.family,
-      sourceExcerpt,
+      sourceExcerpt: sourceExcerpt.value,
       resolvedSymbol: candidate.usage.symbol,
       visibleConfiguration: candidate.usage.configuration,
-      missingFacts: candidate.usage.missingFacts
+      missingFacts: [...new Set(missingFacts)]
     }
   };
 }
