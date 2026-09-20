@@ -1,6 +1,16 @@
 # Changelog
 
-## 0.1.7
+## 0.1.8
+
+- Fixed `demo` for every registry consumer. `files` shipped `examples/notes` but not the example application sources that `src/demo.ts` reads, so `npx upgrade-radar demo` — the documented no-key entry point — failed with `ENOENT` when installed from npm while working from a git clone. Adds the two example source directories and a packaging-smoke guard that runs `demo` from a packed production install.
+- Added `scripts/evidence-query-parser.mjs` (`npm run evidence:query-parser`), which boots `express@4.21.2` and `express@5.1.0` on loopback, sends one identical nested query string to each, and asserts the exact results: v4 parses `filters` into `{color:"red",size:"L"}`, v5 leaves it `undefined` with the bracketed keys literal, and `app.set("query parser","extended")` restores the v4 object. Runs in CI on Node 24 and 25.
+- Corrected the README, which described the change as parsing "into a different shape". Measured, `req.query.filters` becomes `undefined`.
+- Clarified that `npx` downloads the package like any install, and that it is the installed baseline that runs locally without provider calls.
+- Added `docs/launch/` with the funnel audit, launch copy, hero demonstration storyboard and measurement baseline, plus `scripts/x-weighted-length.mjs` for twitter-text v3 weighted counts.
+
+## 0.1.7 — tagged, not published
+
+Tagged at `a117ca4` but never published to the registry; these changes reach npm in 0.1.8.
 
 - Rewrote the README opening around a concrete Express 4.21.2 → 5.1.0 upgrade — the two-line diff, the four reviewed behavior families the example app touches with file and line, and the one row that fails silently rather than crashing — instead of opening on the analysis architecture. States explicitly that the bundled Express notes cover four behavior families rather than the whole migration guide, so the example cannot be read as a clean bill of health for everything else.
 - Replaced the package description, which led with an integration name rather than the problem, and expanded keywords from five terms to fifteen.
