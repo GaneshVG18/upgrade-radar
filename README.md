@@ -50,7 +50,7 @@ Report: /path/to/project/upgrade-radar-report/report.html
 For a reproducible release-pinned run:
 
 ```sh
-npx --yes upgrade-radar@0.1.5 review
+npx --yes upgrade-radar@0.1.6 review
 ```
 
 For CI, pin the composite Action to the release tag shown below.
@@ -132,7 +132,7 @@ Code owns package identity, versions, source/note spans, hashes, redaction, caps
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0
-- uses: GaneshVG18/upgrade-radar@v0.1.5
+- uses: GaneshVG18/upgrade-radar@v0.1.6
 ```
 
 The composite Action needs only read access to the checkout. With full Git history available, it infers refs the same way as the CLI. `base`, `head`, `notes-dir`, and `provider` are optional overrides. Bundled notes and the no-key baseline are the defaults. It writes the report to the job summary and uploads an artifact. Do not expose provider keys to untrusted fork PR jobs. See [privacy](docs/privacy.md) for an opt-in trusted live-mode example.

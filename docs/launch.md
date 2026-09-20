@@ -39,7 +39,7 @@ Coverage limits stay visible. `no_direct_evidence` only means the bounded analyz
 The default path needs no AI key:
 
 ```sh
-npx --yes --package=github:GaneshVG18/upgrade-radar#v0.1.5 upgrade-radar review
+npx --yes --package=github:GaneshVG18/upgrade-radar#v0.1.6 upgrade-radar review
 ```
 
 It infers the Git comparison, detects supported direct npm upgrades, uses bundled reviewed notes, and writes JSON + Markdown + standalone offline HTML.
