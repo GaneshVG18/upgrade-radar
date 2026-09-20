@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -8,7 +8,7 @@ import { sha256 } from "../../src/core/util.js";
 import { BaselineProvider } from "../../src/providers/baseline.js";
 import { renderHtml, validateReport } from "../../src/report/render.js";
 import { workingTreeSnapshot } from "../../src/source/inventory.js";
-import type { Provider } from "../../src/types.js";
+import type { Provider, Report } from "../../src/types.js";
 
 function fixtureRepo() {
   const root = mkdtempSync(path.join(tmpdir(), "upgrade-radar-int-"));
@@ -39,6 +39,20 @@ describe("analysis integration", () => {
     const revision = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
     expect(report.findings[0]?.code.url).toBe(`https://github.com/example/fixture/blob/${revision}/src/app.ts#L3`);
     expect(() => validateReport(report)).not.toThrow();
+  });
+
+  it("builds revision-pinned source links only for supported remote URL shapes", async () => {
+    const root = fixtureRepo();
+    const revision = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+
+    execFileSync("git", ["remote", "set-url", "origin", "https://gitlab.com/example/fixture.git"], { cwd: root });
+    const gitlab = await analyzeUpgrade({ repo: root, upgrade: { package: "express", from: "4.21.2", to: "5.1.0" }, notesPath: path.join(root, "notes.md"), provider: new BaselineProvider(), runMode: "baseline" });
+    expect(gitlab.report.findings[0]?.code.url).toBe(`https://gitlab.com/example/fixture/-/blob/${revision}/src/app.ts#L3`);
+
+    execFileSync("git", ["remote", "set-url", "origin", "https://example.com/example/fixture.git"], { cwd: root });
+    const unsupported = await analyzeUpgrade({ repo: root, upgrade: { package: "express", from: "4.21.2", to: "5.1.0" }, notesPath: path.join(root, "notes.md"), provider: new BaselineProvider(), runMode: "baseline" });
+    expect(unsupported.report.findings[0]?.code.url).toBeUndefined();
+    expect(unsupported.report.coverageLimitations).toContain("source_line_links_unavailable_without_supported_origin_remote");
   });
 
   it("keeps a provider failure visible as unknown and incomplete", async () => {
@@ -89,6 +103,11 @@ describe("analysis integration", () => {
   });
 
   it("uses stable CLI exit codes and never silently falls back from Jev", () => {
+    const help = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "--help"], { encoding: "utf8" });
+    expect(help.status).toBe(0);
+    expect(help.stdout).toMatch(/Usage:/);
+    expect(help.stdout).toMatch(/analyze/);
+    expect(help.stderr).toBe("");
     const demo = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "demo", "--out", path.join(fixtureRepo(), "out")], { encoding: "utf8", env: { ...process.env, TYPESAFE_API_KEY: "" } });
     expect(demo.status).toBe(0);
     const missingKey = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "analyze", "--repo", fixtureRepo(), "--package", "express", "--from", "4.21.2", "--to", "5.1.0", "--notes", path.join(fixtureRepo(), "notes.md"), "--provider", "jev"], { encoding: "utf8", env: { ...process.env, TYPESAFE_API_KEY: "" } });
@@ -135,7 +154,42 @@ describe("analysis integration", () => {
     const out = mkdtempSync(path.join(tmpdir(), "upgrade-radar-diff-out-"));
     const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "diff", "--repo", root, "--base", base, "--head", head, "--notes-dir", notesDir, "--provider", "baseline", "--out", out], { encoding: "utf8" });
     expect(run.status).toBe(0);
+    expect(run.stderr).not.toMatch(/No such remote/);
     const after = execFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" });
     expect(after).toBe(before);
+  });
+
+  it("keeps dependency upgrades visible and incomplete when supplied notes are missing", () => {
+    const root = fixtureRepo();
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"express":"4.21.2","zod":"3.25.76"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"express":"4.21.2","zod":"3.25.76"}},"node_modules/express":{"version":"4.21.2"},"node_modules/zod":{"version":"3.25.76"}}}\n');
+    writeFileSync(path.join(root, "src/schema.ts"), 'import { z } from "zod";\nexport const schema=z.object({a:z.string().default("x").optional()});\n');
+    execFileSync("git", ["add", "."], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "two dependency baseline"], { cwd: root });
+    const base = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"express":"5.1.0","zod":"4.1.5"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"express":"5.1.0","zod":"4.1.5"}},"node_modules/express":{"version":"5.1.0"},"node_modules/zod":{"version":"4.1.5"}}}\n');
+    execFileSync("git", ["add", "package.json", "package-lock.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "upgrade express and zod"], { cwd: root });
+    const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+
+    const notesDir = path.join(root, "partial-notes");
+    mkdirSync(notesDir);
+    const note = '---\npackage: express\nfrom: 4.21.2\nto: 5.1.0\nsource: https://example.com/express\nretrieved: 2026-09-20\n---\n\n# Query\n\nFamily: express-query-parser-default\n\nThe default parser changed.\n';
+    writeFileSync(path.join(notesDir, "express.md"), note);
+    writeFileSync(path.join(notesDir, "notes-manifest.json"), JSON.stringify({ documents: [{ file: "express.md", package: "express", from: "4.21.2", to: "5.1.0", sourceUrl: "https://example.com/express", retrieved: "2026-09-20", sha256: sha256(note) }] }));
+    const out = mkdtempSync(path.join(tmpdir(), "upgrade-radar-partial-notes-"));
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "diff", "--repo", root, "--base", base, "--head", head, "--notes-dir", notesDir, "--provider", "baseline", "--out", out], { encoding: "utf8" });
+
+    expect(run.status).toBe(2);
+    const report = JSON.parse(readFileSync(path.join(out, "report.json"), "utf8")) as Report;
+    expect(report.complete).toBe(false);
+    expect(report.upgrades).toEqual([
+      { package: "express", from: "4.21.2", to: "5.1.0" },
+      { package: "zod", from: "3.25.76", to: "4.1.5" }
+    ]);
+    expect(report.unknownItems).toContain("missing_applicable_notes:zod:3.25.76->4.1.5");
+    expect(report.coverageLimitations).toContain("missing_applicable_notes:zod:3.25.76->4.1.5");
   });
 });

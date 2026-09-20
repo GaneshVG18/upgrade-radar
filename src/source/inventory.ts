@@ -24,7 +24,7 @@ function allowedPath(rel: string): boolean {
 function remoteWebBase(root: string): string | undefined {
   let remote: string;
   try {
-    remote = git(root, ["remote", "get-url", "origin"]).trim();
+    remote = git(root, ["config", "--get", "remote.origin.url"]).trim();
   } catch {
     return undefined;
   }
@@ -36,7 +36,16 @@ function remoteWebBase(root: string): string | undefined {
     remote = remote.replace(/^ssh:\/\/git@([^/]+)\//, "https://$1/");
   }
   if (!/^https?:\/\//.test(remote)) return undefined;
-  return remote.replace(/\.git$/, "").replace(/\/$/, "");
+  const normalized = remote.replace(/\.git$/, "").replace(/\/$/, "");
+  let hostname: string;
+  try {
+    hostname = new URL(normalized).hostname.toLowerCase();
+  } catch {
+    return undefined;
+  }
+  if (hostname === "github.com") return normalized;
+  if (hostname === "gitlab.com") return `${normalized}/-`;
+  return undefined;
 }
 
 function buildSnapshot(

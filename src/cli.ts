@@ -8,7 +8,7 @@ import { BaselineProvider } from "./providers/baseline.js";
 import { JevProvider } from "./providers/jev.js";
 import { writeReport } from "./report/render.js";
 import { gitObjectSnapshot, gitTextAt } from "./source/inventory.js";
-import type { Provider, RunMode, Upgrade } from "./types.js";
+import type { Provider, Report, RunMode, SourceSnapshot, Upgrade } from "./types.js";
 
 export const EXIT = {
   completed: 0,
@@ -18,6 +18,21 @@ export const EXIT = {
 } as const;
 
 type Args = Record<string, string | boolean>;
+
+const HELP = `Upgrade Radar — evidence-linked dependency upgrade review
+
+Usage:
+  upgrade-radar demo [--out <dir>]
+  upgrade-radar analyze --repo <path> --package <name> --from <version> --to <version> --notes <file> [--provider baseline|jev] [--dry-run] [--out <dir>]
+  upgrade-radar diff --repo <path> --base <sha> --head <sha> --notes-dir <dir> [--provider baseline|jev] [--out <dir>]
+
+Commands:
+  demo      Generate the authored, no-network illustrative report.
+  analyze   Analyze one explicit dependency upgrade in a local source tree.
+  diff      Infer direct dependency upgrades between two local Git revisions.
+
+Exit codes: 0 completed, 2 incomplete, 64 invalid input, 69 provider failure.
+`;
 
 function parseArgs(argv: string[]): { command: string; args: Args } {
   const [command, ...rest] = argv;
@@ -63,6 +78,30 @@ function noteFile(notesDir: string, upgrade: Upgrade): string | undefined {
   });
 }
 
+function missingNotesReport(upgrade: Upgrade, snapshot: SourceSnapshot, mode: RunMode): Report {
+  const gap = `missing_applicable_notes:${upgrade.package}:${upgrade.from}->${upgrade.to}`;
+  return {
+    schemaVersion: "upgrade-radar-report/v1",
+    runMode: mode,
+    generatedAt: new Date().toISOString(),
+    sourceRevision: snapshot.revision,
+    upgrades: [upgrade],
+    noteProvenance: [],
+    counts: {
+      scanned: snapshot.scannedCount,
+      skipped: snapshot.skippedCount,
+      truncated: snapshot.truncatedCount,
+      candidates: 0,
+      findings: 0,
+      unknown: 1
+    },
+    complete: false,
+    findings: [],
+    unknownItems: [gap],
+    coverageLimitations: [...new Set([...snapshot.limitations, gap])]
+  };
+}
+
 async function runAnalyze(args: Args): Promise<number> {
   const repo = path.resolve(required(args, "repo"));
   const upgrade = { package: required(args, "package"), from: required(args, "from"), to: required(args, "to") };
@@ -105,12 +144,14 @@ async function runDiff(args: Args): Promise<number> {
   let providerFailure = false;
   for (const upgrade of upgrades) {
     const notesPath = noteFile(notesDir, upgrade);
-    if (!notesPath) continue;
+    if (!notesPath) {
+      reports.push(missingNotesReport(upgrade, snapshot, mode));
+      continue;
+    }
     const result = await analyzeUpgrade({ repo, upgrade, notesPath, provider, runMode: mode, snapshot, skipDependencyValidation: true });
     reports.push(result.report);
     providerFailure ||= result.providerFailure;
   }
-  if (reports.length === 0) throw new Error("Dependency changes were found, but no applicable supplied notes were found");
   const report = mergeReports(reports, mode);
   mkdirSync(out, { recursive: true });
   writeReport(report, out);
@@ -120,7 +161,12 @@ async function runDiff(args: Args): Promise<number> {
 }
 
 async function main(): Promise<number> {
-  const { command, args } = parseArgs(process.argv.slice(2));
+  const argv = process.argv.slice(2);
+  if (argv.includes("--help") || argv.includes("-h") || argv[0] === "help") {
+    process.stdout.write(HELP);
+    return EXIT.completed;
+  }
+  const { command, args } = parseArgs(argv);
   if (command === "demo") {
     const out = path.resolve(typeof args.out === "string" ? args.out : "artifacts/demo");
     writeReport(illustrativeDemoReport(), out);
