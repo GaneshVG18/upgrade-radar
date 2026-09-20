@@ -1,6 +1,10 @@
 name: Upgrade Radar
 description: Evidence-linked review queue for npm dependency behavior changes
 inputs:
+  repo:
+    description: Local checked-out repository to analyze; defaults to the workflow workspace
+    required: false
+    default: ''
   base:
     description: Base Git commit SHA
     required: true
@@ -30,14 +34,23 @@ runs:
       run: npm ci --prefix "$GITHUB_ACTION_PATH" --ignore-scripts && npm run --prefix "$GITHUB_ACTION_PATH" build
     - name: Analyze dependency diff
       shell: bash
-      run: >-
-        node "$GITHUB_ACTION_PATH/dist/cli.js" diff
-        --repo "$GITHUB_WORKSPACE"
-        --base "${{ inputs.base }}"
-        --head "${{ inputs.head }}"
-        --notes-dir "${{ inputs.notes-dir }}"
-        --provider "${{ inputs.provider }}"
-        --out "${{ inputs.out }}"
+      env:
+        UPGRADE_RADAR_REPO: ${{ inputs.repo }}
+        UPGRADE_RADAR_BASE: ${{ inputs.base }}
+        UPGRADE_RADAR_HEAD: ${{ inputs.head }}
+        UPGRADE_RADAR_NOTES_DIR: ${{ inputs.notes-dir }}
+        UPGRADE_RADAR_PROVIDER: ${{ inputs.provider }}
+        UPGRADE_RADAR_OUT: ${{ inputs.out }}
+      run: |
+        repo="$UPGRADE_RADAR_REPO"
+        if [ -z "$repo" ]; then repo="$GITHUB_WORKSPACE"; fi
+        node "$GITHUB_ACTION_PATH/dist/cli.js" diff \
+          --repo "$repo" \
+          --base "$UPGRADE_RADAR_BASE" \
+          --head "$UPGRADE_RADAR_HEAD" \
+          --notes-dir "$UPGRADE_RADAR_NOTES_DIR" \
+          --provider "$UPGRADE_RADAR_PROVIDER" \
+          --out "$UPGRADE_RADAR_OUT"
     - name: Add job summary
       if: always()
       shell: bash

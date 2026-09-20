@@ -26,6 +26,63 @@ jobs:
         run: |
           node dist/cli.js analyze --repo ./examples/express-app --package express --from 4.21.2 --to 5.1.0 --notes ./examples/notes/express-5.md --provider baseline --out artifacts/express
           node dist/cli.js analyze --repo ./examples/zod-app --package zod --from 3.25.76 --to 4.1.5 --notes ./examples/notes/zod-4.md --provider baseline --out artifacts/zod
+      - name: Prepare composite Action smoke fixture
+        id: action-fixture
+        shell: bash
+        run: |
+          fixture="$RUNNER_TEMP/upgrade-radar-action-fixture"
+          rm -rf "$fixture"
+          mkdir -p "$fixture/src"
+          git -C "$fixture" init -q -b main
+          git -C "$fixture" config user.email fixture@example.com
+          git -C "$fixture" config user.name "Upgrade Radar CI"
+          cat > "$fixture/package.json" <<'JSON'
+          {"name":"action-fixture","version":"1.0.0","dependencies":{"express":"4.21.2"}}
+          JSON
+          cat > "$fixture/package-lock.json" <<'JSON'
+          {"name":"action-fixture","version":"1.0.0","lockfileVersion":3,"requires":true,"packages":{"":{"name":"action-fixture","version":"1.0.0","dependencies":{"express":"4.21.2"}},"node_modules/express":{"version":"4.21.2"}}}
+          JSON
+          cat > "$fixture/src/app.ts" <<'TS'
+          import express from "express";
+          const app = express();
+          app.get("/search", (req, res) => res.json(req.query.filters));
+          TS
+          git -C "$fixture" add .
+          git -C "$fixture" commit -qm "express 4"
+          base="$(git -C "$fixture" rev-parse HEAD)"
+          python3 - "$fixture" <<'PY'
+          import json, pathlib, sys
+          root = pathlib.Path(sys.argv[1])
+          package = json.loads((root / "package.json").read_text())
+          package["dependencies"]["express"] = "5.1.0"
+          (root / "package.json").write_text(json.dumps(package, separators=(",", ":")) + "\n")
+          lock = json.loads((root / "package-lock.json").read_text())
+          lock["packages"][""]["dependencies"]["express"] = "5.1.0"
+          lock["packages"]["node_modules/express"]["version"] = "5.1.0"
+          (root / "package-lock.json").write_text(json.dumps(lock, separators=(",", ":")) + "\n")
+          PY
+          git -C "$fixture" add package.json package-lock.json
+          git -C "$fixture" commit -qm "express 5"
+          head="$(git -C "$fixture" rev-parse HEAD)"
+          echo "repo=$fixture" >> "$GITHUB_OUTPUT"
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "head=$head" >> "$GITHUB_OUTPUT"
+      - name: Composite Action smoke
+        uses: ./
+        with:
+          repo: ${{ steps.action-fixture.outputs.repo }}
+          base: ${{ steps.action-fixture.outputs.base }}
+          head: ${{ steps.action-fixture.outputs.head }}
+          notes-dir: ${{ github.workspace }}/examples/notes
+          provider: baseline
+          out: ${{ runner.temp }}/upgrade-radar-action-report
+      - name: Verify composite Action report
+        shell: bash
+        run: |
+          test -s "$RUNNER_TEMP/upgrade-radar-action-report/report.json"
+          test -s "$RUNNER_TEMP/upgrade-radar-action-report/report.md"
+          test -s "$RUNNER_TEMP/upgrade-radar-action-report/report.html"
+          node -e 'const r=require(process.env.RUNNER_TEMP+"/upgrade-radar-action-report/report.json"); if (!r.complete || r.upgrades?.[0]?.package!=="express" || r.upgrades?.[0]?.from!=="4.21.2" || r.upgrades?.[0]?.to!=="5.1.0") process.exit(1)'
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3 — preview
+
+- Added an end-to-end CI smoke of the composite GitHub Action using a synthetic local Git fixture, including report verification and artifact upload.
+- Added an optional `repo` Action input for analyzing another already-checked-out local repository while preserving the workflow workspace as the default.
+
 ## 0.1.2 — preview
 
 - Corrected public GitHub Action examples to reference the current prerelease tag consistently.
