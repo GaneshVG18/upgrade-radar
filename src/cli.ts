@@ -1,6 +1,8 @@
 #!/usr/bin/env node
+import { execFileSync } from "node:child_process";
 import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { analyzeUpgrade, dryRunPlan, mergeReports } from "./analyze.js";
 import { assertExactUpgrade, directDependenciesFromText, lockfileVersionFromText, lockVersionFromText, manifestUsesWorkspaces } from "./core/dependency.js";
 import { illustrativeDemoReport } from "./demo.js";
@@ -19,14 +21,19 @@ export const EXIT = {
 
 type Args = Record<string, string | boolean>;
 
+const BUNDLED_NOTES_DIR = fileURLToPath(new URL("../examples/notes", import.meta.url));
+
 const HELP = `Upgrade Radar — evidence-linked dependency upgrade review
 
 Usage:
+  upgrade-radar review [--repo <path>] [--base <sha>] [--head <sha>] [--notes-dir <dir>] [--provider baseline|jev] [--out <dir>]
   upgrade-radar demo [--out <dir>]
   upgrade-radar analyze --repo <path> --package <name> --from <version> --to <version> --notes <file> [--provider baseline|jev] [--dry-run] [--out <dir>]
   upgrade-radar diff --repo <path> --base <sha> --head <sha> --notes-dir <dir> [--provider baseline|jev] [--out <dir>]
 
 Commands:
+  review    Zero-config local review. Defaults to the current repo, current HEAD,
+            an inferred branch/base commit, bundled reviewed notes, and baseline mode.
   demo      Generate the authored, no-network illustrative report.
   analyze   Analyze one explicit dependency upgrade in a local source tree.
   diff      Infer direct dependency upgrades between two local Git revisions.
@@ -36,7 +43,7 @@ Exit codes: 0 completed, 2 incomplete, 64 invalid input, 69 provider failure.
 
 function parseArgs(argv: string[]): { command: string; args: Args } {
   const [command, ...rest] = argv;
-  if (!command) throw new Error("Missing command: demo | analyze | diff");
+  if (!command) throw new Error("Missing command: review | demo | analyze | diff");
   const args: Args = {};
   for (let i = 0; i < rest.length; i += 1) {
     const token = rest[i]!;
@@ -53,6 +60,38 @@ function required(args: Args, name: string): string {
   const value = args[name];
   if (typeof value !== "string" || !value) throw new Error(`Missing --${name}`);
   return value;
+}
+
+function optionalString(args: Args, name: string): string | undefined {
+  const value = args[name];
+  return typeof value === "string" && value ? value : undefined;
+}
+
+function gitTry(repo: string, args: string[]): string | undefined {
+  try {
+    return execFileSync("git", ["-C", repo, ...args], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"]
+    }).trim() || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function inferReviewBase(repo: string, head: string): string {
+  const headCommit = gitTry(repo, ["rev-parse", "--verify", `${head}^{commit}`]);
+  if (!headCommit) throw new Error(`Unable to resolve review head: ${head}`);
+
+  for (const candidate of ["origin/main", "origin/master", "main", "master"]) {
+    const candidateCommit = gitTry(repo, ["rev-parse", "--verify", `${candidate}^{commit}`]);
+    if (!candidateCommit || candidateCommit === headCommit) continue;
+    const mergeBase = gitTry(repo, ["merge-base", candidateCommit, headCommit]);
+    if (mergeBase && mergeBase !== headCommit) return mergeBase;
+  }
+
+  const parent = gitTry(repo, ["rev-parse", "--verify", `${headCommit}~1^{commit}`]);
+  if (parent) return parent;
+  throw new Error("Unable to infer a review base. Pass --base <sha> for repositories with only one commit.");
 }
 
 function providerNameFrom(args: Args): "baseline" | "jev" {
@@ -156,6 +195,29 @@ function coverageGapReport(snapshot: SourceSnapshot, mode: RunMode, gaps: string
   };
 }
 
+function noDependencyChangesReport(snapshot: SourceSnapshot, mode: RunMode): Report {
+  return {
+    schemaVersion: "upgrade-radar-report/v1",
+    runMode: mode,
+    generatedAt: new Date().toISOString(),
+    sourceRevision: snapshot.revision,
+    upgrades: [],
+    noteProvenance: [],
+    counts: {
+      scanned: snapshot.scannedCount,
+      skipped: snapshot.skippedCount,
+      truncated: snapshot.truncatedCount,
+      candidates: 0,
+      findings: 0,
+      unknown: 0
+    },
+    complete: true,
+    findings: [],
+    unknownItems: [],
+    coverageLimitations: [...snapshot.limitations]
+  };
+}
+
 function optionalGitTextAt(repo: string, revision: string, file: string): string | undefined {
   try {
     return gitTextAt(repo, revision, file);
@@ -183,12 +245,13 @@ async function runAnalyze(args: Args): Promise<number> {
   return result.report.complete ? EXIT.completed : EXIT.incomplete;
 }
 
-async function runDiff(args: Args): Promise<number> {
-  const repo = path.resolve(required(args, "repo"));
-  const base = required(args, "base");
-  const head = required(args, "head");
-  const notesDir = path.resolve(required(args, "notes-dir"));
-  const out = path.resolve(typeof args.out === "string" ? args.out : "artifacts/review");
+async function runDiff(args: Args, reviewDefaults = false): Promise<number> {
+  const repo = path.resolve(reviewDefaults ? (optionalString(args, "repo") ?? process.cwd()) : required(args, "repo"));
+  const head = reviewDefaults ? (optionalString(args, "head") ?? "HEAD") : required(args, "head");
+  const base = reviewDefaults ? (optionalString(args, "base") ?? inferReviewBase(repo, head)) : required(args, "base");
+  const notesDir = path.resolve(reviewDefaults ? (optionalString(args, "notes-dir") ?? BUNDLED_NOTES_DIR) : required(args, "notes-dir"));
+  const defaultOut = reviewDefaults ? path.join(repo, "upgrade-radar-report") : "artifacts/review";
+  const out = path.resolve(optionalString(args, "out") ?? defaultOut);
   const { provider, mode } = providerFrom(args);
   const snapshot = gitObjectSnapshot(repo, head);
   const baseManifestText = gitTextAt(repo, base, "package.json");
@@ -231,7 +294,14 @@ async function runDiff(args: Args): Promise<number> {
       }
     }
   }
-  if (upgrades.length === 0 && dependencyGaps.length === 0) throw new Error("No direct dependency version changes found between base and head");
+  if (upgrades.length === 0 && dependencyGaps.length === 0) {
+    if (!reviewDefaults) throw new Error("No direct dependency version changes found between base and head");
+    const report = noDependencyChangesReport(snapshot, mode);
+    writeReport(report, out);
+    process.stdout.write(`Upgrade Radar: no direct dependency version changes between ${base} and ${head}.\n`);
+    process.stdout.write(`Report: ${out}/report.html\n`);
+    return EXIT.completed;
+  }
   const reports: Report[] = dependencyGaps.length > 0 ? [coverageGapReport(snapshot, mode, dependencyGaps)] : [];
   let providerFailure = false;
   for (const upgrade of upgrades) {
@@ -247,7 +317,14 @@ async function runDiff(args: Args): Promise<number> {
   const report = mergeReports(reports, mode);
   mkdirSync(out, { recursive: true });
   writeReport(report, out);
-  process.stdout.write(`${out}/report.html\n`);
+  if (reviewDefaults) {
+    const reviewCount = report.findings.filter((finding) => finding.disposition === "review").length;
+    const noDirectEvidence = report.findings.filter((finding) => finding.disposition === "no_direct_evidence").length;
+    process.stdout.write(`Upgrade Radar: ${report.upgrades.length} upgrade(s), ${reviewCount} review, ${noDirectEvidence} no-direct-evidence, ${report.counts.unknown} unknown.\n`);
+    process.stdout.write(`Report: ${out}/report.html\n`);
+  } else {
+    process.stdout.write(`${out}/report.html\n`);
+  }
   if (providerFailure) return EXIT.providerFailure;
   return report.complete ? EXIT.completed : EXIT.incomplete;
 }
@@ -265,6 +342,7 @@ async function main(): Promise<number> {
     process.stdout.write(`${out}/report.html\n`);
     return EXIT.completed;
   }
+  if (command === "review") return runDiff(args, true);
   if (command === "analyze") return runAnalyze(args);
   if (command === "diff") return runDiff(args);
   throw new Error(`Unknown command: ${command}`);

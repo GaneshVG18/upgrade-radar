@@ -71,10 +71,6 @@ jobs:
         uses: ./
         with:
           repo: ${{ steps.action-fixture.outputs.repo }}
-          base: ${{ steps.action-fixture.outputs.base }}
-          head: ${{ steps.action-fixture.outputs.head }}
-          notes-dir: ${{ github.workspace }}/examples/notes
-          provider: baseline
           out: ${{ runner.temp }}/upgrade-radar-action-report
       - name: Verify composite Action report
         shell: bash

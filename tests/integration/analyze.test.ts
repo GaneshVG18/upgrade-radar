@@ -196,6 +196,48 @@ describe("analysis integration", () => {
     expect(incomplete.status).toBe(2);
   });
 
+  it("reviews the current repository out of the box with bundled notes and inferred refs", () => {
+    const root = fixtureRepo();
+    execFileSync("git", ["checkout", "-qb", "feature/upgrade"], { cwd: root });
+    writeFileSync(path.join(root, "package.json"), '{"name":"fixture","dependencies":{"express":"5.1.0"}}\n');
+    writeFileSync(path.join(root, "package-lock.json"), '{"lockfileVersion":3,"packages":{"":{"dependencies":{"express":"5.1.0"}},"node_modules/express":{"version":"5.1.0"}}}\n');
+    execFileSync("git", ["add", "package.json", "package-lock.json"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "upgrade express"], { cwd: root });
+    writeFileSync(path.join(root, "src/extra.ts"), "export const laterFeatureWork = true;\n");
+    execFileSync("git", ["add", "src/extra.ts"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "later feature work"], { cwd: root });
+
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "review"], { cwd: root, encoding: "utf8" });
+    expect(run.status).toBe(0);
+    expect(run.stdout).toMatch(/Upgrade Radar: 1 upgrade\(s\), 1 review/);
+    const report = JSON.parse(readFileSync(path.join(root, "upgrade-radar-report", "report.json"), "utf8")) as Report;
+    expect(report.complete).toBe(true);
+    expect(report.upgrades).toEqual([{ package: "express", from: "4.21.2", to: "5.1.0" }]);
+    expect(report.findings).toHaveLength(1);
+    expect(report.findings[0]?.changeFamily).toBe("express-query-parser-default");
+    expect(report.noteProvenance[0]).toMatchObject({
+      package: "express",
+      sourceUrl: "https://expressjs.com/en/guide/migrating-5.html",
+      verified: true
+    });
+  });
+
+  it("treats a zero-config review with no dependency changes as a clean no-op", () => {
+    const root = fixtureRepo();
+    writeFileSync(path.join(root, "src/extra.ts"), "export const unchangedDependency = true;\n");
+    execFileSync("git", ["add", "src/extra.ts"], { cwd: root });
+    execFileSync("git", ["commit", "-qm", "application-only change"], { cwd: root });
+
+    const run = spawnSync(process.execPath, [path.resolve("dist/cli.js"), "review"], { cwd: root, encoding: "utf8" });
+    expect(run.status).toBe(0);
+    expect(run.stdout).toMatch(/no direct dependency version changes/i);
+    const report = JSON.parse(readFileSync(path.join(root, "upgrade-radar-report", "report.json"), "utf8")) as Report;
+    expect(report.complete).toBe(true);
+    expect(report.upgrades).toEqual([]);
+    expect(report.findings).toEqual([]);
+    expect(report.unknownItems).toEqual([]);
+  });
+
   it("rejects tracked source symlinks and reports source-size truncation", () => {
     const symlinkRoot = fixtureRepo();
     symlinkSync("app.ts", path.join(symlinkRoot, "src/link.ts"));

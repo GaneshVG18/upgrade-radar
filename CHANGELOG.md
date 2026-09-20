@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a zero-config `review` command that defaults to the current repository, infers the comparison refs, uses bundled reviewed Express/Zod notes, runs the no-key baseline, and writes a ready-to-open report.
+- Made the composite GitHub Action zero-config after a full-history checkout; base/head, notes directory, and provider are now optional overrides.
+- Made Git-installed/npx usage self-building via `prepare`, included runtime notes in the package, and fixed `typescript` from a dev-only dependency to a required runtime dependency after a clean consumer install exposed the packaging bug.
 - Redesigned the standalone HTML report as a compact retro engineering review instrument while preserving offline operation, evidence navigation, filtering, run context, unknown coverage, and keyboard/mobile behavior.
 - Hardened direct-dependency evidence so missing/unsupported lockfiles, workspaces, range mismatches, unresolved diff versions, and dependency downgrades cannot look complete.
 - Tightened Express analysis for same-file named handlers, destructured `req.query`, named-vs-unnamed wildcards, non-literal routes, final visible parser configuration, and unresolved local wrappers. Conditional parser settings now remain unknown.

@@ -8,19 +8,30 @@ Upgrade Radar connects reviewed dependency migration notes to the unchanged appl
 
 The screenshot is generated from the repository's authored no-key demo. It is permanently labeled **ILLUSTRATIVE FIXTURE** and does not represent a live Jev evaluation.
 
-## No-key quickstart
+## Run it
 
-`Upgrade Radar` is pinned to Node 24.11.1. The repository enforces its Node engine during npm installs so an unsupported major fails early instead of producing a misleading test result.
+From the npm project you want to review, on Node 24:
 
 ```sh
+npx --yes --package=github:GaneshVG18/upgrade-radar upgrade-radar review
+```
+
+That is the normal path. `review` uses the current repository and `HEAD`, infers the comparison base from a local `main`/`master` merge-base (falling back to `HEAD~1`), uses the bundled reviewed Express/Zod migration notes, and runs the deterministic no-key baseline. It writes `upgrade-radar-report/{report.html,report.md,report.json}`. No TypeSafe account or API key is required.
+
+If there are no direct dependency version changes in the inferred comparison, the command succeeds with an empty report instead of pretending there was work to review. If an upgrade is detected but bundled notes or source coverage are insufficient, the report is incomplete and exits `2` rather than looking clean.
+
+To try the authored demo instead of analyzing a repository:
+
+```sh
+git clone https://github.com/GaneshVG18/upgrade-radar.git
+cd upgrade-radar
 nvm use
-npm ci --ignore-scripts
-npm run build
-node dist/cli.js demo --out artifacts/demo
+npm ci
+npm run demo
 open artifacts/demo/report.html
 ```
 
-The demo shows the concrete Express 4 → 5 query-parser change, an explicit parser-configuration control, and a Zod 3 → 4 optional-default output change.
+The demo shows the concrete Express 4 → 5 query-parser change, an explicit parser-configuration control, and a Zod 3 → 4 optional-default output change. The repository is pinned to Node 24.11.1.
 
 ## Analyze an explicit upgrade
 
@@ -47,7 +58,13 @@ node dist/cli.js analyze \
 
 ## Diff two Git revisions
 
-`diff` reads `package.json` and package-lock v2/v3 directly from supplied Git objects, inspects source at `head`, and does not check out or alter the working tree:
+`review` accepts explicit refs and custom notes when inference is not what you want:
+
+```sh
+upgrade-radar review --base <base-sha> --head <head-sha>
+```
+
+The lower-level `diff` command keeps every input explicit. It reads `package.json` and package-lock v2/v3 directly from supplied Git objects, inspects source at `head`, and does not check out or alter the working tree:
 
 ```sh
 node dist/cli.js diff \
@@ -75,15 +92,13 @@ Code owns package identity, versions, source/note spans, hashes, redaction, caps
 ## GitHub Action
 
 ```yaml
-- uses: GaneshVG18/upgrade-radar@v0.1.4
+- uses: actions/checkout@v4
   with:
-    base: ${{ github.event.pull_request.base.sha }}
-    head: ${{ github.event.pull_request.head.sha }}
-    notes-dir: reviewed-notes
-    provider: baseline
+    fetch-depth: 0
+- uses: GaneshVG18/upgrade-radar@v0.1.4
 ```
 
-The composite Action needs only read access to the checkout. It writes the report to the job summary and uploads an artifact. Do not expose provider keys to untrusted fork PR jobs. See [privacy](docs/privacy.md) for an opt-in trusted live-mode example.
+The composite Action needs only read access to the checkout. With full Git history available, it infers refs the same way as the CLI. `base`, `head`, `notes-dir`, and `provider` are optional overrides. Bundled notes and the no-key baseline are the defaults. It writes the report to the job summary and uploads an artifact. Do not expose provider keys to untrusted fork PR jobs. See [privacy](docs/privacy.md) for an opt-in trusted live-mode example.
 
 ## Evidence and evaluation
 

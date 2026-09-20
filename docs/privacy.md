@@ -24,9 +24,6 @@ jobs:
         env:
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
         with:
-          base: ${{ github.event.repository.default_branch }}
-          head: ${{ github.sha }}
-          notes-dir: reviewed-notes
           provider: jev
 ```
 
