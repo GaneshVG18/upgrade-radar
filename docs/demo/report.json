@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "upgrade-radar-report/v1",
+  "runMode": "illustrative_fixture",
+  "generatedAt": "2026-09-20T06:35:38.577Z",
+  "sourceRevision": "authored-demo-fixtures",
+  "upgrades": [
+    {
+      "package": "express",
+      "from": "4.21.2",
+      "to": "5.1.0"
+    },
+    {
+      "package": "zod",
+      "from": "3.25.76",
+      "to": "4.1.5"
+    }
+  ],
+  "noteProvenance": [],
+  "counts": {
+    "scanned": 2,
+    "skipped": 0,
+    "truncated": 0,
+    "candidates": 3,
+    "findings": 3,
+    "unknown": 0
+  },
+  "complete": true,
+  "findings": [
+    {
+      "id": "demo-express-query-review",
+      "package": "express",
+      "changeFamily": "express-query-parser-default",
+      "disposition": "review",
+      "relationship": "Express 5 changes the default query parser; this handler reads a nested query object without an explicit extended-parser setting.",
+      "code": {
+        "id": "code-31faee0c39535981",
+        "kind": "code",
+        "path": "examples/express-app/src/app.ts",
+        "startLine": 6,
+        "endLine": 6,
+        "sourceHash": "39650e4f5f1c9c4649adb8549c0a6f1e2f792d2f9b926dc8d40188fba7054c46",
+        "spanHash": "5910f94604403b376c391beb4f09d89d7a4d6bce1309b5a758d639dbe6ac2d76",
+        "excerpt": "  const filters = req.query.filters;"
+      },
+      "note": {
+        "id": "note-e682097c6bad5495",
+        "kind": "note",
+        "path": "examples/notes/express-5.md",
+        "startLine": 13,
+        "endLine": 13,
+        "sourceHash": "4ba3e4a853213ad35fbd14aa27923ed0c64bfce4323c8eca72ce2c34d0584444",
+        "spanHash": "7e4a7a53dda1fc4b8838035ba2cc6e0e809b2a7a70e70f3c4de5b4f8650e1b27",
+        "excerpt": "Express 5 uses the simple query parser by default. Applications that rely on nested query-string objects should review `req.query` consumers or explicitly select the parser behavior they require."
+      },
+      "reasons": [
+        "authored_fixture_decision",
+        "executable_compatibility_fixture_confirms_old_new_output_difference"
+      ]
+    },
+    {
+      "id": "demo-express-control",
+      "package": "express",
+      "changeFamily": "express-query-parser-default",
+      "disposition": "no_direct_evidence",
+      "relationship": "This control app explicitly selects the extended query parser, preserving the nested query shape covered by the note.",
+      "code": {
+        "id": "code-4be7d03d5aa611bd",
+        "kind": "code",
+        "path": "examples/express-app/src/app.ts",
+        "startLine": 23,
+        "endLine": 23,
+        "sourceHash": "39650e4f5f1c9c4649adb8549c0a6f1e2f792d2f9b926dc8d40188fba7054c46",
+        "spanHash": "04c493cfc19fcfdc8f78b3be0561fd4f2cbe8bf44117f90c5f0639997a4eaa17",
+        "excerpt": "configured.set(\"query parser\", \"extended\");"
+      },
+      "note": {
+        "id": "note-e682097c6bad5495",
+        "kind": "note",
+        "path": "examples/notes/express-5.md",
+        "startLine": 13,
+        "endLine": 13,
+        "sourceHash": "4ba3e4a853213ad35fbd14aa27923ed0c64bfce4323c8eca72ce2c34d0584444",
+        "spanHash": "7e4a7a53dda1fc4b8838035ba2cc6e0e809b2a7a70e70f3c4de5b4f8650e1b27",
+        "excerpt": "Express 5 uses the simple query parser by default. Applications that rely on nested query-string objects should review `req.query` consumers or explicitly select the parser behavior they require."
+      },
+      "reasons": [
+        "authored_fixture_decision",
+        "explicit_extended_query_parser_control"
+      ]
+    },
+    {
+      "id": "demo-zod-optional-default",
+      "package": "zod",
+      "changeFamily": "zod-optional-default",
+      "disposition": "review",
+      "relationship": "Zod 4 applies a default inside an optional object field; this schema uses that exact shape and changes parsed output.",
+      "code": {
+        "id": "code-3a649c7a8770b9b4",
+        "kind": "code",
+        "path": "examples/zod-app/src/schema.ts",
+        "startLine": 4,
+        "endLine": 4,
+        "sourceHash": "62e4e02d9b1afe359b1777d30d1d4aaf17a3eddb5a4cd4e9fe102085cd82a0a1",
+        "spanHash": "5aa9e3d7df938d09197b4dcaa44860191a149404759774673b4884c1a5c09ecd",
+        "excerpt": "  theme: z.string().default('dark').optional(),"
+      },
+      "note": {
+        "id": "note-c5487bae107275c9",
+        "kind": "note",
+        "path": "examples/notes/zod-4.md",
+        "startLine": 13,
+        "endLine": 13,
+        "sourceHash": "0f36322e290b41168a8864d1498c6433064b71aae85208eabcac64bb61083575",
+        "spanHash": "b4c785d2b8f9b0920fe6df4edc297f951682c86ec6d7915c36f376a6bdb56826",
+        "excerpt": "Zod 4 applies defaults inside optional object fields, so parsing an object with the field omitted can now materialize the default value in the output."
+      },
+      "reasons": [
+        "authored_fixture_decision",
+        "executable_compatibility_fixture_confirms_old_new_output_difference"
+      ]
+    }
+  ],
+  "unknownItems": [],
+  "coverageLimitations": [
+    "illustrative_fixture_decisions_are_authored_and_do_not_measure_jev_accuracy",
+    "bounded_static_analysis_no_full_program_dataflow_or_call_graph",
+    "computed_imports_dynamic_requires_and_unresolved_wrappers_are_not_followed"
+  ]
+}

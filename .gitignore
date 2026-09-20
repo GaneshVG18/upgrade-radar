@@ -1,0 +1,11 @@
+node_modules/
+dist/
+artifacts/
+.private-evals/
+.env
+.env.*
+!.env.example
+.DS_Store
+coverage/
+*.log
+.upgrade-radar-cache/

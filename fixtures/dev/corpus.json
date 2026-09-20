@@ -1,0 +1,386 @@
+[
+  {
+    "id": "express_query_parser_default_positive",
+    "family": "express-query-parser-default",
+    "split": "dev",
+    "label": "positive",
+    "caseRole": "canonical",
+    "sourceSnippet": "const filters = req.query.filters;",
+    "noteFamily": "express-query-parser-default",
+    "expected": {
+      "old": {
+        "status": 200,
+        "body": "{\"a\":{\"b\":\"1\"}}"
+      },
+      "new": {
+        "status": 200,
+        "body": "{\"a[b]\":\"1\"}"
+      }
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_query_parser_default_negative",
+    "family": "express-query-parser-default",
+    "split": "dev",
+    "label": "negative",
+    "caseRole": "canonical_control",
+    "sourceSnippet": "configured.set(\"query parser\", \"extended\")",
+    "noteFamily": "express-query-parser-default",
+    "expected": {
+      "old": {
+        "status": 200,
+        "body": "{\"a\":{\"b\":\"1\"}}"
+      },
+      "new": {
+        "status": 200,
+        "body": "{\"a\":{\"b\":\"1\"}}"
+      }
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_query_parser_default_unknown",
+    "family": "express-query-parser-default",
+    "split": "dev",
+    "label": "unknown",
+    "caseRole": "missing_evidence",
+    "sourceSnippet": "const value = wrapper.express_query_parser_default;",
+    "noteFamily": "express-query-parser-default",
+    "missingEvidence": "behavior-relevant value is hidden behind an unresolved wrapper",
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_query_parser_default_robust_alias",
+    "family": "express-query-parser-default",
+    "split": "dev",
+    "label": "positive",
+    "caseRole": "robustness",
+    "sourceSnippet": "// alias/import variant\nconst filters = req.query.filters;",
+    "noteFamily": "express-query-parser-default",
+    "expected": {
+      "old": {
+        "status": 200,
+        "body": "{\"a\":{\"b\":\"1\"}}"
+      },
+      "new": {
+        "status": 200,
+        "body": "{\"a[b]\":\"1\"}"
+      }
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_query_parser_default_robust_cjs",
+    "family": "express-query-parser-default",
+    "split": "dev",
+    "label": "positive",
+    "caseRole": "robustness",
+    "sourceSnippet": "// CommonJS/literal require variant\nconst filters = req.query.filters;",
+    "noteFamily": "express-query-parser-default",
+    "expected": {
+      "old": {
+        "status": 200,
+        "body": "{\"a\":{\"b\":\"1\"}}"
+      },
+      "new": {
+        "status": 200,
+        "body": "{\"a[b]\":\"1\"}"
+      }
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_query_parser_default_robust_control",
+    "family": "express-query-parser-default",
+    "split": "dev",
+    "label": "negative",
+    "caseRole": "robustness_control",
+    "sourceSnippet": "// stable control variant\nconfigured.set(\"query parser\", \"extended\")",
+    "noteFamily": "express-query-parser-default",
+    "expected": {
+      "old": {
+        "status": 200,
+        "body": "{\"a\":{\"b\":\"1\"}}"
+      },
+      "new": {
+        "status": 200,
+        "body": "{\"a\":{\"b\":\"1\"}}"
+      }
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_wildcard_named_positive",
+    "family": "express-wildcard-named",
+    "split": "dev",
+    "label": "positive",
+    "caseRole": "canonical",
+    "sourceSnippet": "app.get(\"/*\", handler)",
+    "noteFamily": "express-wildcard-named",
+    "expected": {
+      "old": "registered",
+      "new": "error:PathError"
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_wildcard_named_negative",
+    "family": "express-wildcard-named",
+    "split": "dev",
+    "label": "negative",
+    "caseRole": "canonical_control",
+    "sourceSnippet": "app.get(\"/health\", handler)",
+    "noteFamily": "express-wildcard-named",
+    "expected": {
+      "old": "registered",
+      "new": "registered"
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_wildcard_named_unknown",
+    "family": "express-wildcard-named",
+    "split": "dev",
+    "label": "unknown",
+    "caseRole": "missing_evidence",
+    "sourceSnippet": "const value = wrapper.express_wildcard_named;",
+    "noteFamily": "express-wildcard-named",
+    "missingEvidence": "behavior-relevant value is hidden behind an unresolved wrapper",
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_wildcard_named_robust_alias",
+    "family": "express-wildcard-named",
+    "split": "dev",
+    "label": "positive",
+    "caseRole": "robustness",
+    "sourceSnippet": "// alias/import variant\napp.get(\"/*\", handler)",
+    "noteFamily": "express-wildcard-named",
+    "expected": {
+      "old": "registered",
+      "new": "error:PathError"
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_wildcard_named_robust_cjs",
+    "family": "express-wildcard-named",
+    "split": "dev",
+    "label": "positive",
+    "caseRole": "robustness",
+    "sourceSnippet": "// CommonJS/literal require variant\napp.get(\"/*\", handler)",
+    "noteFamily": "express-wildcard-named",
+    "expected": {
+      "old": "registered",
+      "new": "error:PathError"
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_wildcard_named_robust_control",
+    "family": "express-wildcard-named",
+    "split": "dev",
+    "label": "negative",
+    "caseRole": "robustness_control",
+    "sourceSnippet": "// stable control variant\napp.get(\"/health\", handler)",
+    "noteFamily": "express-wildcard-named",
+    "expected": {
+      "old": "registered",
+      "new": "registered"
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_app_del_removed_positive",
+    "family": "express-app-del-removed",
+    "split": "dev",
+    "label": "positive",
+    "caseRole": "canonical",
+    "sourceSnippet": "app.del(\"/item\", handler)",
+    "noteFamily": "express-app-del-removed",
+    "expected": {
+      "old": "function",
+      "new": "undefined"
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_app_del_removed_negative",
+    "family": "express-app-del-removed",
+    "split": "dev",
+    "label": "negative",
+    "caseRole": "canonical_control",
+    "sourceSnippet": "app.delete(\"/item\", handler)",
+    "noteFamily": "express-app-del-removed",
+    "expected": {
+      "old": "function",
+      "new": "function"
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_app_del_removed_unknown",
+    "family": "express-app-del-removed",
+    "split": "dev",
+    "label": "unknown",
+    "caseRole": "missing_evidence",
+    "sourceSnippet": "const value = wrapper.express_app_del_removed;",
+    "noteFamily": "express-app-del-removed",
+    "missingEvidence": "behavior-relevant value is hidden behind an unresolved wrapper",
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_app_del_removed_robust_alias",
+    "family": "express-app-del-removed",
+    "split": "dev",
+    "label": "positive",
+    "caseRole": "robustness",
+    "sourceSnippet": "// alias/import variant\napp.del(\"/item\", handler)",
+    "noteFamily": "express-app-del-removed",
+    "expected": {
+      "old": "function",
+      "new": "undefined"
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_app_del_removed_robust_cjs",
+    "family": "express-app-del-removed",
+    "split": "dev",
+    "label": "positive",
+    "caseRole": "robustness",
+    "sourceSnippet": "// CommonJS/literal require variant\napp.del(\"/item\", handler)",
+    "noteFamily": "express-app-del-removed",
+    "expected": {
+      "old": "function",
+      "new": "undefined"
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_app_del_removed_robust_control",
+    "family": "express-app-del-removed",
+    "split": "dev",
+    "label": "negative",
+    "caseRole": "robustness_control",
+    "sourceSnippet": "// stable control variant\napp.delete(\"/item\", handler)",
+    "noteFamily": "express-app-del-removed",
+    "expected": {
+      "old": "function",
+      "new": "function"
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_req_param_removed_positive",
+    "family": "express-req-param-removed",
+    "split": "dev",
+    "label": "positive",
+    "caseRole": "canonical",
+    "sourceSnippet": "req.param(\"id\")",
+    "noteFamily": "express-req-param-removed",
+    "expected": {
+      "old": {
+        "status": 200,
+        "body": "42"
+      },
+      "new": {
+        "status": 500,
+        "body": "error:TypeError"
+      }
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_req_param_removed_negative",
+    "family": "express-req-param-removed",
+    "split": "dev",
+    "label": "negative",
+    "caseRole": "canonical_control",
+    "sourceSnippet": "req.params.id",
+    "noteFamily": "express-req-param-removed",
+    "expected": {
+      "old": {
+        "status": 200,
+        "body": "42"
+      },
+      "new": {
+        "status": 200,
+        "body": "42"
+      }
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_req_param_removed_unknown",
+    "family": "express-req-param-removed",
+    "split": "dev",
+    "label": "unknown",
+    "caseRole": "missing_evidence",
+    "sourceSnippet": "const value = wrapper.express_req_param_removed;",
+    "noteFamily": "express-req-param-removed",
+    "missingEvidence": "behavior-relevant value is hidden behind an unresolved wrapper",
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_req_param_removed_robust_alias",
+    "family": "express-req-param-removed",
+    "split": "dev",
+    "label": "positive",
+    "caseRole": "robustness",
+    "sourceSnippet": "// alias/import variant\nreq.param(\"id\")",
+    "noteFamily": "express-req-param-removed",
+    "expected": {
+      "old": {
+        "status": 200,
+        "body": "42"
+      },
+      "new": {
+        "status": 500,
+        "body": "error:TypeError"
+      }
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_req_param_removed_robust_cjs",
+    "family": "express-req-param-removed",
+    "split": "dev",
+    "label": "positive",
+    "caseRole": "robustness",
+    "sourceSnippet": "// CommonJS/literal require variant\nreq.param(\"id\")",
+    "noteFamily": "express-req-param-removed",
+    "expected": {
+      "old": {
+        "status": 200,
+        "body": "42"
+      },
+      "new": {
+        "status": 500,
+        "body": "error:TypeError"
+      }
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "express_req_param_removed_robust_control",
+    "family": "express-req-param-removed",
+    "split": "dev",
+    "label": "negative",
+    "caseRole": "robustness_control",
+    "sourceSnippet": "// stable control variant\nreq.params.id",
+    "noteFamily": "express-req-param-removed",
+    "expected": {
+      "old": {
+        "status": 200,
+        "body": "42"
+      },
+      "new": {
+        "status": 200,
+        "body": "42"
+      }
+    },
+    "command": "npm run test:compat"
+  }
+]

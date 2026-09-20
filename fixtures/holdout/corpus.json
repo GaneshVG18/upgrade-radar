@@ -1,0 +1,340 @@
+[
+  {
+    "id": "zod_optional_default_positive",
+    "family": "zod-optional-default",
+    "split": "holdout",
+    "label": "positive",
+    "caseRole": "canonical",
+    "sourceSnippet": "z.object({ a: z.string().default(\"x\").optional() })",
+    "noteFamily": "zod-optional-default",
+    "expected": {
+      "old": {},
+      "new": {
+        "a": "x"
+      }
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_optional_default_negative",
+    "family": "zod-optional-default",
+    "split": "holdout",
+    "label": "negative",
+    "caseRole": "canonical_control",
+    "sourceSnippet": "z.object({ a: z.string().default(\"x\") })",
+    "noteFamily": "zod-optional-default",
+    "expected": {
+      "old": {
+        "a": "x"
+      },
+      "new": {
+        "a": "x"
+      }
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_optional_default_unknown",
+    "family": "zod-optional-default",
+    "split": "holdout",
+    "label": "unknown",
+    "caseRole": "missing_evidence",
+    "sourceSnippet": "const value = wrapper.zod_optional_default;",
+    "noteFamily": "zod-optional-default",
+    "missingEvidence": "behavior-relevant value is hidden behind an unresolved wrapper",
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_optional_default_robust_alias",
+    "family": "zod-optional-default",
+    "split": "holdout",
+    "label": "positive",
+    "caseRole": "robustness",
+    "sourceSnippet": "// alias/import variant\nz.object({ a: z.string().default(\"x\").optional() })",
+    "noteFamily": "zod-optional-default",
+    "expected": {
+      "old": {},
+      "new": {
+        "a": "x"
+      }
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_optional_default_robust_cjs",
+    "family": "zod-optional-default",
+    "split": "holdout",
+    "label": "positive",
+    "caseRole": "robustness",
+    "sourceSnippet": "// CommonJS/literal require variant\nz.object({ a: z.string().default(\"x\").optional() })",
+    "noteFamily": "zod-optional-default",
+    "expected": {
+      "old": {},
+      "new": {
+        "a": "x"
+      }
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_optional_default_robust_control",
+    "family": "zod-optional-default",
+    "split": "holdout",
+    "label": "negative",
+    "caseRole": "robustness_control",
+    "sourceSnippet": "// stable control variant\nz.object({ a: z.string().default(\"x\") })",
+    "noteFamily": "zod-optional-default",
+    "expected": {
+      "old": {
+        "a": "x"
+      },
+      "new": {
+        "a": "x"
+      }
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_default_short_circuit_positive",
+    "family": "zod-default-short-circuit",
+    "split": "holdout",
+    "label": "positive",
+    "caseRole": "canonical",
+    "sourceSnippet": "z.string().transform(upper).default(\"x\")",
+    "noteFamily": "zod-default-short-circuit",
+    "expected": {
+      "old": "X",
+      "new": "x"
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_default_short_circuit_negative",
+    "family": "zod-default-short-circuit",
+    "split": "holdout",
+    "label": "negative",
+    "caseRole": "canonical_control",
+    "sourceSnippet": "schema.parse(\"a\")",
+    "noteFamily": "zod-default-short-circuit",
+    "expected": {
+      "old": "A",
+      "new": "A"
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_default_short_circuit_unknown",
+    "family": "zod-default-short-circuit",
+    "split": "holdout",
+    "label": "unknown",
+    "caseRole": "missing_evidence",
+    "sourceSnippet": "const value = wrapper.zod_default_short_circuit;",
+    "noteFamily": "zod-default-short-circuit",
+    "missingEvidence": "behavior-relevant value is hidden behind an unresolved wrapper",
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_default_short_circuit_robust_alias",
+    "family": "zod-default-short-circuit",
+    "split": "holdout",
+    "label": "positive",
+    "caseRole": "robustness",
+    "sourceSnippet": "// alias/import variant\nz.string().transform(upper).default(\"x\")",
+    "noteFamily": "zod-default-short-circuit",
+    "expected": {
+      "old": "X",
+      "new": "x"
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_default_short_circuit_robust_cjs",
+    "family": "zod-default-short-circuit",
+    "split": "holdout",
+    "label": "positive",
+    "caseRole": "robustness",
+    "sourceSnippet": "// CommonJS/literal require variant\nz.string().transform(upper).default(\"x\")",
+    "noteFamily": "zod-default-short-circuit",
+    "expected": {
+      "old": "X",
+      "new": "x"
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_default_short_circuit_robust_control",
+    "family": "zod-default-short-circuit",
+    "split": "holdout",
+    "label": "negative",
+    "caseRole": "robustness_control",
+    "sourceSnippet": "// stable control variant\nschema.parse(\"a\")",
+    "noteFamily": "zod-default-short-circuit",
+    "expected": {
+      "old": "A",
+      "new": "A"
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_number_infinity_positive",
+    "family": "zod-number-infinity",
+    "split": "holdout",
+    "label": "positive",
+    "caseRole": "canonical",
+    "sourceSnippet": "z.number().safeParse(Infinity)",
+    "noteFamily": "zod-number-infinity",
+    "expected": {
+      "old": true,
+      "new": false
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_number_infinity_negative",
+    "family": "zod-number-infinity",
+    "split": "holdout",
+    "label": "negative",
+    "caseRole": "canonical_control",
+    "sourceSnippet": "z.number().safeParse(1)",
+    "noteFamily": "zod-number-infinity",
+    "expected": {
+      "old": true,
+      "new": true
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_number_infinity_unknown",
+    "family": "zod-number-infinity",
+    "split": "holdout",
+    "label": "unknown",
+    "caseRole": "missing_evidence",
+    "sourceSnippet": "const value = wrapper.zod_number_infinity;",
+    "noteFamily": "zod-number-infinity",
+    "missingEvidence": "behavior-relevant value is hidden behind an unresolved wrapper",
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_number_infinity_robust_alias",
+    "family": "zod-number-infinity",
+    "split": "holdout",
+    "label": "positive",
+    "caseRole": "robustness",
+    "sourceSnippet": "// alias/import variant\nz.number().safeParse(Infinity)",
+    "noteFamily": "zod-number-infinity",
+    "expected": {
+      "old": true,
+      "new": false
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_number_infinity_robust_cjs",
+    "family": "zod-number-infinity",
+    "split": "holdout",
+    "label": "positive",
+    "caseRole": "robustness",
+    "sourceSnippet": "// CommonJS/literal require variant\nz.number().safeParse(Infinity)",
+    "noteFamily": "zod-number-infinity",
+    "expected": {
+      "old": true,
+      "new": false
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_number_infinity_robust_control",
+    "family": "zod-number-infinity",
+    "split": "holdout",
+    "label": "negative",
+    "caseRole": "robustness_control",
+    "sourceSnippet": "// stable control variant\nz.number().safeParse(1)",
+    "noteFamily": "zod-number-infinity",
+    "expected": {
+      "old": true,
+      "new": true
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_record_one_arg_positive",
+    "family": "zod-record-one-arg",
+    "split": "holdout",
+    "label": "positive",
+    "caseRole": "canonical",
+    "sourceSnippet": "z.record(z.string())",
+    "noteFamily": "zod-record-one-arg",
+    "expected": {
+      "old": true,
+      "new": "error:TypeError"
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_record_one_arg_negative",
+    "family": "zod-record-one-arg",
+    "split": "holdout",
+    "label": "negative",
+    "caseRole": "canonical_control",
+    "sourceSnippet": "z.record(z.string(), z.string())",
+    "noteFamily": "zod-record-one-arg",
+    "expected": {
+      "old": true,
+      "new": true
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_record_one_arg_unknown",
+    "family": "zod-record-one-arg",
+    "split": "holdout",
+    "label": "unknown",
+    "caseRole": "missing_evidence",
+    "sourceSnippet": "const value = wrapper.zod_record_one_arg;",
+    "noteFamily": "zod-record-one-arg",
+    "missingEvidence": "behavior-relevant value is hidden behind an unresolved wrapper",
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_record_one_arg_robust_alias",
+    "family": "zod-record-one-arg",
+    "split": "holdout",
+    "label": "positive",
+    "caseRole": "robustness",
+    "sourceSnippet": "// alias/import variant\nz.record(z.string())",
+    "noteFamily": "zod-record-one-arg",
+    "expected": {
+      "old": true,
+      "new": "error:TypeError"
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_record_one_arg_robust_cjs",
+    "family": "zod-record-one-arg",
+    "split": "holdout",
+    "label": "positive",
+    "caseRole": "robustness",
+    "sourceSnippet": "// CommonJS/literal require variant\nz.record(z.string())",
+    "noteFamily": "zod-record-one-arg",
+    "expected": {
+      "old": true,
+      "new": "error:TypeError"
+    },
+    "command": "npm run test:compat"
+  },
+  {
+    "id": "zod_record_one_arg_robust_control",
+    "family": "zod-record-one-arg",
+    "split": "holdout",
+    "label": "negative",
+    "caseRole": "robustness_control",
+    "sourceSnippet": "// stable control variant\nz.record(z.string(), z.string())",
+    "noteFamily": "zod-record-one-arg",
+    "expected": {
+      "old": true,
+      "new": true
+    },
+    "command": "npm run test:compat"
+  }
+]

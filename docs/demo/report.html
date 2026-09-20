@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Upgrade Radar report</title>
+  <style>
+  :root{color-scheme:dark;background:#0a0d12;color:#e9eef7;font-family:Inter,ui-sans-serif,system-ui,sans-serif}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% 0,#18263e 0,transparent 40%),#0a0d12}.wrap{max-width:1100px;margin:auto;padding:48px 24px 80px}.eyebrow{color:#91a4c5;text-transform:uppercase;letter-spacing:.13em;font-size:12px}.hero{display:grid;grid-template-columns:1.4fr .6fr;gap:24px;align-items:end;margin:18px 0 32px}.hero h1{font-size:clamp(44px,8vw,86px);letter-spacing:-.055em;line-height:.92;margin:0}.hero p{color:#b8c4d8;line-height:1.55}.fixture{border:1px solid #f2c94c;background:#2d260d;color:#ffe895;padding:12px 16px;font-weight:800;margin:20px 0}.stats{display:flex;gap:12px;flex-wrap:wrap}.stat,.filters,.finding,.panel{background:#111722;border:1px solid #263145;border-radius:14px}.stat{padding:12px 16px}.filters{padding:14px;display:flex;gap:12px;flex-wrap:wrap;margin:20px 0}.filters select{background:#0b111b;color:#eef4ff;border:1px solid #34435b;padding:9px 12px;border-radius:9px}.finding{padding:20px;margin:12px 0;box-shadow:0 14px 40px #0004}.rowhead{display:flex;gap:12px;align-items:center}.pill{font-size:12px;text-transform:uppercase;letter-spacing:.08em;padding:5px 9px;border-radius:999px}.review{background:#36260a;color:#ffd978}.no_direct_evidence{background:#0c2e28;color:#8ee8d5}.unknown{background:#38202a;color:#ffb6cc}.finding p{color:#c3cee0}.links{color:#8799b6;font-size:13px}.links a{color:#a9c7ff}.evidence{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.evidence section{min-width:0}pre{white-space:pre-wrap;word-break:break-word;background:#090d14;border:1px solid #202a3a;padding:14px;border-radius:10px;color:#d8e2f2}.panel{padding:18px;margin-top:24px}.panel h2{margin-top:0}.small{font-size:12px;color:#8090aa}@media(max-width:760px){.hero,.evidence{grid-template-columns:1fr}.wrap{padding:28px 16px}.hero h1{font-size:52px}}
+  </style></head><body><main class="wrap"><div class="eyebrow">Evidence-linked dependency review</div><div class="fixture">ILLUSTRATIVE FIXTURE — authored decisions, no live Jev call</div><div class="hero"><h1>Upgrade<br>Radar</h1><p>Find the application code worth reviewing when a dependency changes behavior. Evidence stays tied to exact code and note spans.</p></div>
+  <div class="stats"><div class="stat"><strong>express 4.21.2 → 5.1.0 · zod 3.25.76 → 4.1.5</strong></div><div class="stat">3 rows</div><div class="stat">0 unknown</div><div class="stat">complete</div></div>
+  <div class="filters"><label>Package <select id="package"><option value="">all</option><option value="express">express</option><option value="zod">zod</option></select></label><label>Disposition <select id="disposition"><option value="">all</option><option value="no_direct_evidence">no_direct_evidence</option><option value="review">review</option></select></label><label>Change family <select id="family"><option value="">all</option><option value="express-query-parser-default">express-query-parser-default</option><option value="zod-optional-default">zod-optional-default</option></select></label></div>
+  <section id="queue"><article class="finding" data-disposition="review" data-package="express" data-family="express-query-parser-default">
+    <div class="rowhead"><span class="pill review">review</span><strong>express-query-parser-default</strong></div>
+    <p>Express 5 changes the default query parser; this handler reads a nested query object without an explicit extended-parser setting.</p>
+    <div class="links">Code <a href="#code-31faee0c39535981">examples/express-app/src/app.ts:6-6</a> · Note <a href="#note-e682097c6bad5495">examples/notes/express-5.md:13-13</a></div>
+    <details><summary>Evidence</summary>
+      <div class="evidence"><section id="note-e682097c6bad5495"><h4>Release note</h4><pre>Express 5 uses the simple query parser by default. Applications that rely on nested query-string objects should review `req.query` consumers or explicitly select the parser behavior they require.</pre></section>
+      <section id="code-31faee0c39535981"><h4>Application code</h4><pre>  const filters = req.query.filters;</pre></section></div>
+      <p class="small">authored_fixture_decision · executable_compatibility_fixture_confirms_old_new_output_difference</p>
+    </details>
+  </article>
+<article class="finding" data-disposition="no_direct_evidence" data-package="express" data-family="express-query-parser-default">
+    <div class="rowhead"><span class="pill no_direct_evidence">no_direct_evidence</span><strong>express-query-parser-default</strong></div>
+    <p>This control app explicitly selects the extended query parser, preserving the nested query shape covered by the note.</p>
+    <div class="links">Code <a href="#code-4be7d03d5aa611bd">examples/express-app/src/app.ts:23-23</a> · Note <a href="#note-e682097c6bad5495">examples/notes/express-5.md:13-13</a></div>
+    <details><summary>Evidence</summary>
+      <div class="evidence"><section id="note-e682097c6bad5495"><h4>Release note</h4><pre>Express 5 uses the simple query parser by default. Applications that rely on nested query-string objects should review `req.query` consumers or explicitly select the parser behavior they require.</pre></section>
+      <section id="code-4be7d03d5aa611bd"><h4>Application code</h4><pre>configured.set(&quot;query parser&quot;, &quot;extended&quot;);</pre></section></div>
+      <p class="small">authored_fixture_decision · explicit_extended_query_parser_control</p>
+    </details>
+  </article>
+<article class="finding" data-disposition="review" data-package="zod" data-family="zod-optional-default">
+    <div class="rowhead"><span class="pill review">review</span><strong>zod-optional-default</strong></div>
+    <p>Zod 4 applies a default inside an optional object field; this schema uses that exact shape and changes parsed output.</p>
+    <div class="links">Code <a href="#code-3a649c7a8770b9b4">examples/zod-app/src/schema.ts:4-4</a> · Note <a href="#note-c5487bae107275c9">examples/notes/zod-4.md:13-13</a></div>
+    <details><summary>Evidence</summary>
+      <div class="evidence"><section id="note-c5487bae107275c9"><h4>Release note</h4><pre>Zod 4 applies defaults inside optional object fields, so parsing an object with the field omitted can now materialize the default value in the output.</pre></section>
+      <section id="code-3a649c7a8770b9b4"><h4>Application code</h4><pre>  theme: z.string().default(&#39;dark&#39;).optional(),</pre></section></div>
+      <p class="small">authored_fixture_decision · executable_compatibility_fixture_confirms_old_new_output_difference</p>
+    </details>
+  </article></section>
+  <section class="panel"><h2>Coverage limitations</h2><ul><li>illustrative_fixture_decisions_are_authored_and_do_not_measure_jev_accuracy</li><li>bounded_static_analysis_no_full_program_dataflow_or_call_graph</li><li>computed_imports_dynamic_requires_and_unresolved_wrappers_are_not_followed</li></ul><p class="small">Advisory output only. no_direct_evidence applies to one note/site pair and does not mean an upgrade is safe to merge.</p></section></main>
+  <script>for(const id of ['package','disposition','family'])document.getElementById(id).addEventListener('change',()=>{const p=document.getElementById('package').value,d=document.getElementById('disposition').value,f=document.getElementById('family').value;for(const row of document.querySelectorAll('.finding'))row.hidden=!!((p&&row.dataset.package!==p)||(d&&row.dataset.disposition!==d)||(f&&row.dataset.family!==f))});</script>
+  </body></html>

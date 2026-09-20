@@ -1,0 +1,6 @@
+{
+  "name": "upgrade-radar-express-example",
+  "private": true,
+  "type": "module",
+  "dependencies": { "express": "4.21.2" }
+}

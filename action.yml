@@ -1,0 +1,54 @@
+name: Upgrade Radar
+description: Evidence-linked review queue for npm dependency behavior changes
+inputs:
+  base:
+    description: Base Git commit SHA
+    required: true
+  head:
+    description: Head Git commit SHA
+    required: true
+  notes-dir:
+    description: Directory containing reviewed notes and notes-manifest.json
+    required: true
+  provider:
+    description: baseline or jev; live Jev requires TYPESAFE_API_KEY in the step environment
+    required: false
+    default: baseline
+  out:
+    description: Report output directory
+    required: false
+    default: artifacts/upgrade-radar
+runs:
+  using: composite
+  steps:
+    - name: Set up Node 24
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24.11.1'
+    - name: Build Upgrade Radar
+      shell: bash
+      run: npm ci --prefix "$GITHUB_ACTION_PATH" --ignore-scripts && npm run --prefix "$GITHUB_ACTION_PATH" build
+    - name: Analyze dependency diff
+      shell: bash
+      run: >-
+        node "$GITHUB_ACTION_PATH/dist/cli.js" diff
+        --repo "$GITHUB_WORKSPACE"
+        --base "${{ inputs.base }}"
+        --head "${{ inputs.head }}"
+        --notes-dir "${{ inputs.notes-dir }}"
+        --provider "${{ inputs.provider }}"
+        --out "${{ inputs.out }}"
+    - name: Add job summary
+      if: always()
+      shell: bash
+      run: |
+        if [ -f "${{ inputs.out }}/report.md" ]; then
+          cat "${{ inputs.out }}/report.md" >> "$GITHUB_STEP_SUMMARY"
+        fi
+    - name: Upload report artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: upgrade-radar-report
+        path: ${{ inputs.out }}
+        if-no-files-found: warn
